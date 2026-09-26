@@ -1,0 +1,45 @@
+# Environments & Secrets
+.env
+.env.*
+!.env.example
+*.env
+
+# Python & Virtual Environments
+venv/
+backend/venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Node & Frontend (React/Vite)
+node_modules/
+frontend-web/node_modules/
+dist/
+build/
+.npm
+*.log
+
+# Flutter & Mobile
+mobile-flutter/.dart_tool/
+mobile-flutter/.flutter-plugins
+mobile-flutter/.flutter-plugins-dependencies
+mobile-flutter/.packages
+mobile-flutter/build/
+.pub-cache/
+.pub/
+
+# IDE & OS Files
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+Desktop.ini
+.DS_Store
