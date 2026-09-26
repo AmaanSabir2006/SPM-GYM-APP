@@ -8,7 +8,12 @@ from app.core.deps import get_current_tenant_gym_id, get_current_token_payload, 
 from app.models.attendance import AttendanceRecord
 from app.models.gym import Gym
 from app.models.member import Member
-from app.schemas.attendance import AttendanceResponse, AttendanceStats, QRCheckInRequest
+from app.schemas.attendance import (
+    AttendanceResponse,
+    AttendanceStats,
+    MemberAttendanceHistory,
+    QRCheckInRequest,
+)
 
 router = APIRouter()
 
@@ -147,3 +152,38 @@ async def get_attendance_stats(
         weekly_count=week_count,
         unique_members_this_week=unique_count,
     )
+
+
+@router.get("/members/{member_id}/history", response_model=MemberAttendanceHistory)
+async def get_member_attendance_history(
+    member_id: str,
+    limit: int = Query(50, ge=1, le=200),
+    gym_id: str = Depends(get_current_tenant_gym_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Retrieve chronological attendance check-in history for a specific member.
+    Enforces tenant isolation by gym_id.
+    """
+    member_res = await db.execute(
+        select(Member).where(Member.id == member_id, Member.gym_id == gym_id)
+    )
+    member = member_res.scalar_one_or_none()
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found in your gym.")
+
+    history_res = await db.execute(
+        select(AttendanceRecord)
+        .where(AttendanceRecord.member_id == member_id, AttendanceRecord.gym_id == gym_id)
+        .order_by(AttendanceRecord.check_in_time.desc())
+        .limit(limit)
+    )
+    history = history_res.scalars().all()
+
+    return MemberAttendanceHistory(
+        member_id=member.id,
+        member_name=member.full_name,
+        total_check_ins=len(history),
+        history=history,
+    )
+

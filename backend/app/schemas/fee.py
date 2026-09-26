@@ -41,3 +41,22 @@ class FeeOverviewStats(BaseModel):
     paid_count: int
     unpaid_count: int
     overdue_count: int
+
+
+class DueAlertItem(BaseModel):
+    fee_record_id: str
+    member_id: str
+    member_name: str
+    phone: str
+    amount_due: float
+    due_date: date
+    days_overdue: int
+    status: str  # 'due_today' or 'overdue'
+    whatsapp_url: str
+
+
+class DueAlertsResponse(BaseModel):
+    due_today_count: int
+    overdue_count: int
+    total_alerts: int
+    alerts: List[DueAlertItem]

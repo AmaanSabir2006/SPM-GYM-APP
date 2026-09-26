@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel
 
 
@@ -24,3 +24,10 @@ class AttendanceStats(BaseModel):
     total_today: int
     weekly_count: int
     unique_members_this_week: int
+
+
+class MemberAttendanceHistory(BaseModel):
+    member_id: str
+    member_name: str
+    total_check_ins: int
+    history: List[AttendanceResponse]
