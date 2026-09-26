@@ -42,7 +42,9 @@ SPM-GYM-APP/
 │   ├── .env.example    # Environment variable template
 │   └── venv/           # Python virtual environment (git-ignored)
 ├── frontend-web/       # React (Vite) Owner & Staff Web Dashboard (Web Lead)
+│   └── INTEGRATION_GUIDE.md # Step-by-step React integration guide with Axios & endpoints
 ├── mobile-flutter/     # Flutter mobile app for QR entrance scanning (Mobile Lead)
+│   └── INTEGRATION_GUIDE.md # Step-by-step Flutter integration guide with camera scanner
 ├── docs/               # Project concept, architecture & implementation guide
 │   └── IMPLEMENTATION_GUIDE.md
 ├── scripts/            # Windows automation scripts (.bat) for 1-click startup
