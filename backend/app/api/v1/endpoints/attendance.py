@@ -7,6 +7,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_tenant_gym_id, get_current_token_payload, TokenPayload
 from app.core.security import create_access_token
 from app.models.attendance import AttendanceRecord
+from app.models.fee import FeeRecord
 from app.models.gym import Gym
 from app.models.member import Member
 from app.schemas.attendance import (
@@ -252,6 +253,18 @@ async def get_member_pass_info(
     )
     total_count = total_res.scalar() or 0
 
+    # Fetch latest fee record for live payment status
+    fee_res = await db.execute(
+        select(FeeRecord)
+        .where(FeeRecord.gym_id == gym_id, FeeRecord.member_id == member.id)
+        .order_by(FeeRecord.due_date.desc())
+        .limit(1)
+    )
+    latest_fee = fee_res.scalar_one_or_none()
+    fee_status = latest_fee.payment_status if latest_fee else "paid"
+    fee_due_date = latest_fee.due_date if latest_fee else None
+    fee_amount_due = float(latest_fee.amount_due) if latest_fee else float(member.monthly_fee)
+
     return MemberPassInfoResponse(
         member_id=member.id,
         member_name=member.full_name,
@@ -267,6 +280,9 @@ async def get_member_pass_info(
         checked_in_today=last_rec is not None,
         last_check_in_time=last_rec.check_in_time if last_rec else None,
         total_check_ins=total_count,
+        fee_status=fee_status,
+        fee_due_date=fee_due_date,
+        fee_amount_due=fee_amount_due,
     )
 
 
@@ -319,6 +335,18 @@ async def get_public_member_pass_info(
     )
     total_count = total_res.scalar() or 0
 
+    # Fetch latest fee record for live payment status
+    fee_res = await db.execute(
+        select(FeeRecord)
+        .where(FeeRecord.gym_id == gym.id, FeeRecord.member_id == member.id)
+        .order_by(FeeRecord.due_date.desc())
+        .limit(1)
+    )
+    latest_fee = fee_res.scalar_one_or_none()
+    fee_status = latest_fee.payment_status if latest_fee else "paid"
+    fee_due_date = latest_fee.due_date if latest_fee else None
+    fee_amount_due = float(latest_fee.amount_due) if latest_fee else float(member.monthly_fee)
+
     return MemberPassInfoResponse(
         member_id=member.id,
         member_name=member.full_name,
@@ -335,6 +363,9 @@ async def get_public_member_pass_info(
         last_check_in_time=last_rec.check_in_time if last_rec else None,
         total_check_ins=total_count,
         pass_token=pass_token,
+        fee_status=fee_status,
+        fee_due_date=fee_due_date,
+        fee_amount_due=fee_amount_due,
     )
 
 

@@ -9,7 +9,8 @@ import {
   RefreshCw, 
   Calendar,
   RotateCcw,
-  Upload
+  Upload,
+  Clock
 } from "lucide-react";
 import axios from "axios";
 import confetti from "canvas-confetti";
@@ -522,6 +523,88 @@ export const MemberScanView = () => {
               Rs. {Number(passInfo?.monthly_fee || 0).toLocaleString()}
             </div>
           </div>
+        </div>
+
+        {/* Live Monthly Fee Payment Status Badge */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "12px",
+            padding: "8px 12px",
+            borderRadius: "10px",
+            background:
+              passInfo?.fee_status === "paid"
+                ? "rgba(16, 185, 129, 0.12)"
+                : passInfo?.fee_status === "overdue"
+                ? "rgba(225, 29, 72, 0.15)"
+                : "rgba(245, 158, 11, 0.12)",
+            border: `1px solid ${
+              passInfo?.fee_status === "paid"
+                ? "rgba(16, 185, 129, 0.3)"
+                : passInfo?.fee_status === "overdue"
+                ? "rgba(225, 29, 72, 0.35)"
+                : "rgba(245, 158, 11, 0.3)"
+            }`,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {passInfo?.fee_status === "paid" ? (
+              <CheckCircle2 size={16} color="#10B981" />
+            ) : passInfo?.fee_status === "overdue" ? (
+              <AlertCircle size={16} color="#E11D48" />
+            ) : (
+              <Clock size={16} color="#F59E0B" />
+            )}
+            <span
+              style={{
+                fontSize: "12px",
+                fontWeight: 700,
+                color:
+                  passInfo?.fee_status === "paid"
+                    ? "#34D399"
+                    : passInfo?.fee_status === "overdue"
+                    ? "#FB7185"
+                    : "#FBBF24",
+              }}
+            >
+              {passInfo?.fee_status === "paid"
+                ? "FEES CLEARED: UP TO DATE"
+                : passInfo?.fee_status === "overdue"
+                ? "PAYMENT OVERDUE"
+                : "MEMBERSHIP FEE DUE"}
+            </span>
+          </div>
+
+          <span
+            style={{
+              fontSize: "11px",
+              fontWeight: 800,
+              padding: "2px 8px",
+              borderRadius: "6px",
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              background:
+                passInfo?.fee_status === "paid"
+                  ? "rgba(16, 185, 129, 0.25)"
+                  : passInfo?.fee_status === "overdue"
+                  ? "rgba(225, 29, 72, 0.25)"
+                  : "rgba(245, 158, 11, 0.25)",
+              color:
+                passInfo?.fee_status === "paid"
+                  ? "#10B981"
+                  : passInfo?.fee_status === "overdue"
+                  ? "#F43F5E"
+                  : "#F59E0B",
+            }}
+          >
+            {passInfo?.fee_status === "paid"
+              ? "PAID"
+              : passInfo?.fee_status === "overdue"
+              ? "OVERDUE"
+              : "UNPAID"}
+          </span>
         </div>
 
         <div

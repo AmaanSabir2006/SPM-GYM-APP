@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import List, Optional
 from pydantic import BaseModel
 
@@ -49,5 +49,9 @@ class MemberPassInfoResponse(BaseModel):
     last_check_in_time: Optional[datetime] = None
     total_check_ins: int = 0
     pass_token: Optional[str] = None
+    fee_status: str = "paid"  # 'paid', 'unpaid', 'overdue'
+    fee_due_date: Optional[date] = None
+    fee_amount_due: Optional[float] = None
+
 
 
