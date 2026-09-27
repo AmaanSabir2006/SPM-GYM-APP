@@ -32,3 +32,16 @@ class MemberResponse(MemberBase):
 
     class Config:
         from_attributes = True
+
+
+class MemberWelcomeResponse(BaseModel):
+    member_id: str
+    member_name: str
+    phone: str
+    monthly_fee: float
+    billing_cycle_day: int
+    gym_name: str
+    pass_token: str
+    scan_url: str
+    whatsapp_message: str
+    whatsapp_url: str
