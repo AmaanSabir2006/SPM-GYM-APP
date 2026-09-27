@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Dumbbell, 
   Sparkles, 
@@ -11,7 +11,9 @@ import {
   Mail, 
   User, 
   Phone,
-  Palette
+  Palette,
+  Sun,
+  Moon
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -20,6 +22,20 @@ export const AuthView = () => {
   const [mode, setMode] = useState("login"); // 'login' | 'register'
   const { login, registerGym } = useAuth();
   const { showToast } = useToast();
+
+  // Dark/Light Theme state for Auth View
+  const [theme, setTheme] = useState(() => localStorage.getItem("gymtrack_theme") || "light");
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
+    document.documentElement.setAttribute("data-theme", nextTheme);
+    localStorage.setItem("gymtrack_theme", nextTheme);
+  };
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -101,44 +117,30 @@ export const AuthView = () => {
   ];
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px",
-        backgroundColor: "var(--bg-root)",
-      }}
-    >
-      <div
-        className="auth-container"
-        style={{
-          maxWidth: "1050px",
-          width: "100%",
-          display: "grid",
-          gridTemplateColumns: "1.1fr 1fr",
-          background: "var(--bg-card)",
-          borderRadius: "var(--radius-xl)",
-          border: "1px solid var(--border-subtle)",
-          boxShadow: "0 20px 50px -10px rgba(15, 23, 42, 0.1), 0 10px 20px -5px rgba(15, 23, 42, 0.04)",
-          overflow: "hidden",
-          animation: "scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both",
-        }}
+    <div className="auth-wrapper">
+      {/* Floating Theme Toggle */}
+      <button
+        type="button"
+        className="auth-theme-toggle"
+        onClick={toggleTheme}
+        title={`Switch to ${theme === "light" ? "Dark" : "Light"} Mode`}
       >
+        {theme === "light" ? (
+          <>
+            <Moon size={15} />
+            <span>Dark Mode</span>
+          </>
+        ) : (
+          <>
+            <Sun size={15} color="#F59E0B" />
+            <span>Light Mode</span>
+          </>
+        )}
+      </button>
+
+      <div className="auth-container">
         {/* Left Side: Brand Showcase */}
-        <div
-          className="auth-brand-panel"
-          style={{
-            padding: "48px 40px",
-            background: "linear-gradient(145deg, #F8FAFC 0%, #EFF6FF 100%)",
-            borderRight: "1px solid var(--border-subtle)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            position: "relative",
-          }}
-        >
+        <div className="auth-brand-panel">
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "32px" }}>
               <div
@@ -185,7 +187,7 @@ export const AuthView = () => {
               </div>
 
               <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
-                <div style={{ width: 34, height: 34, borderRadius: 10, background: "#EFF6FF", color: "#2563EB", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <div className="auth-badge-blue">
                   <QrCode size={17} />
                 </div>
                 <div>
@@ -216,7 +218,7 @@ export const AuthView = () => {
         </div>
 
         {/* Right Side: Auth Form */}
-        <div style={{ padding: "40px 36px", display: "flex", flexDirection: "column", justifyContent: "center", background: "#FFFFFF" }}>
+        <div className="auth-form-panel">
           {/* Mode Tabs */}
           <div
             style={{
@@ -270,7 +272,7 @@ export const AuthView = () => {
             /* Login Form */
             <form onSubmit={handleLoginSubmit}>
               <div style={{ marginBottom: "20px" }}>
-                <h3 style={{ fontSize: "20px", marginBottom: "4px" }}>Welcome Back</h3>
+                <h3 style={{ fontSize: "20px", marginBottom: "4px", color: "var(--text-main)" }}>Welcome Back</h3>
                 <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>
                   Enter your gym account credentials to access your dashboard.
                 </p>
@@ -314,7 +316,7 @@ export const AuthView = () => {
             /* Register Form */
             <form onSubmit={handleRegisterSubmit}>
               <div style={{ marginBottom: "16px" }}>
-                <h3 style={{ fontSize: "20px", marginBottom: "4px" }}>Onboard Your Gym Tenant</h3>
+                <h3 style={{ fontSize: "20px", marginBottom: "4px", color: "var(--text-main)" }}>Onboard Your Gym Tenant</h3>
                 <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>
                   Create your gym tenant profile and owner account in 1 click.
                 </p>
@@ -358,7 +360,7 @@ export const AuthView = () => {
                           height: "28px",
                           borderRadius: "50%",
                           background: c.hex,
-                          border: regPrimaryColor === c.hex ? "3px solid #0F172A" : "1px solid rgba(0,0,0,0.1)",
+                          border: regPrimaryColor === c.hex ? "3px solid var(--text-main)" : "1px solid var(--border-medium)",
                           cursor: "pointer",
                           boxShadow: regPrimaryColor === c.hex ? `0 0 8px ${c.hex}` : "none",
                         }}

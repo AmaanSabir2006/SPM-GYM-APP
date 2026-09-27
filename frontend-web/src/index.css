@@ -1770,3 +1770,136 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0 auto 12px;
   opacity: 0.5;
 }
+
+/* =============================
+   AUTH SCREEN (LIGHT & DARK THEMES)
+   ============================= */
+
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background-color: var(--bg-root);
+  position: relative;
+  transition: background-color 0.25s ease;
+}
+
+.auth-theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: all 0.2s ease;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.auth-theme-toggle:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.auth-container {
+  max-width: 1050px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 20px 50px -10px rgba(15, 23, 42, 0.1), 0 10px 20px -5px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+  animation: scale-up 0.3s var(--ease-out-expo) both;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+[data-theme="dark"] .auth-container {
+  background: var(--bg-card);
+  border-color: var(--border-medium);
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.auth-brand-panel {
+  padding: 48px 40px;
+  background: linear-gradient(145deg, #F8FAFC 0%, #EFF6FF 100%);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  transition: background 0.25s ease;
+}
+
+[data-theme="dark"] .auth-brand-panel {
+  background: linear-gradient(145deg, #0F172A 0%, #162032 100%);
+  border-right: 1px solid var(--border-subtle);
+}
+
+.auth-form-panel {
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #FFFFFF;
+  transition: background 0.25s ease;
+}
+
+[data-theme="dark"] .auth-form-panel {
+  background: var(--bg-card);
+}
+
+.auth-badge-blue {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #EFF6FF;
+  color: #2563EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .auth-badge-blue {
+  background: rgba(37, 99, 235, 0.18);
+  color: #60A5FA;
+}
+
+/* Dark mode browser autofill overrides */
+[data-theme="dark"] input:-webkit-autofill,
+[data-theme="dark"] input:-webkit-autofill:hover,
+[data-theme="dark"] input:-webkit-autofill:focus,
+[data-theme="dark"] textarea:-webkit-autofill,
+[data-theme="dark"] textarea:-webkit-autofill:hover,
+[data-theme="dark"] textarea:-webkit-autofill:focus,
+[data-theme="dark"] select:-webkit-autofill,
+[data-theme="dark"] select:-webkit-autofill:hover,
+[data-theme="dark"] select:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text-main) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-surface) inset !important;
+  box-shadow: 0 0 0 1000px var(--bg-surface) inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+@media (max-width: 860px) {
+  .auth-container {
+    grid-template-columns: 1fr;
+  }
+  .auth-brand-panel {
+    display: none;
+  }
+}
