@@ -1,11 +1,11 @@
 from typing import Optional
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic import BaseModel
 from app.core.config import settings
 
-security = HTTPBearer()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
 
 class TokenPayload(BaseModel):
@@ -14,16 +14,13 @@ class TokenPayload(BaseModel):
     role: Optional[str] = None
 
 
-async def get_current_token_payload(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> TokenPayload:
+async def get_current_token_payload(token: str = Depends(oauth2_scheme)) -> TokenPayload:
     """Decodes JWT and verifies required claims."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    token = credentials.credentials
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id: str = payload.get("sub")

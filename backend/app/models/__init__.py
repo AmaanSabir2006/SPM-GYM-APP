@@ -4,6 +4,7 @@ from app.models.user import User
 from app.models.member import Member
 from app.models.fee import FeeRecord
 from app.models.attendance import AttendanceRecord
+from app.models.expense import Expense
 
 __all__ = [
     "Base",
@@ -14,4 +15,5 @@ __all__ = [
     "Member",
     "FeeRecord",
     "AttendanceRecord",
+    "Expense",
 ]
