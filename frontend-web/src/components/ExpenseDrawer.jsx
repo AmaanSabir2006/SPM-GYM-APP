@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Trash2, Plus, Calendar, Building, Zap, Users, Wrench, Package, HelpCircle, Receipt } from "lucide-react";
 import API from "../api/client";
 import { useToast } from "../context/ToastContext";
@@ -49,58 +50,55 @@ export const ExpenseDrawer = ({ onClose, onRefresh, onOpenAddModal }) => {
     }
   };
 
-  return (
-    <div className="modal-overlay" onClick={onClose} style={{ justifyContent: "flex-end", padding: 0 }}>
+  const drawerContent = (
+    <div className="drawer-overlay" onClick={onClose}>
       <div
-        style={{
-          width: "560px",
-          maxWidth: "100vw",
-          height: "100vh",
-          background: "var(--bg-card)",
-          borderLeft: "1px solid var(--border-medium)",
-          boxShadow: "-10px 0 40px rgba(0, 0, 0, 0.2)",
-          display: "flex",
-          flexDirection: "column",
-          animation: "slide-left 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
-        }}
+        className="drawer-panel"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="modal-header" style={{ padding: "20px 24px" }}>
+        <div className="drawer-header">
           <div>
-            <h3 style={{ fontSize: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <h3 style={{ fontSize: "19px", display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, margin: 0 }}>
               <Receipt size={20} color="var(--primary)" />
               Gym Operational Expenses
             </h3>
-            <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
+            <div style={{ fontSize: "12.5px", color: "var(--text-muted)", marginTop: "4px" }}>
               Total Logged: Rs. {totalAmount.toLocaleString()}
             </div>
           </div>
           <button
             onClick={onClose}
             style={{
-              background: "transparent",
-              border: "none",
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "var(--radius-sm)",
               color: "var(--text-muted)",
               cursor: "pointer",
+              padding: "6px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
+            title="Close drawer"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Quick Add Bar */}
         <div
           style={{
-            padding: "14px 24px",
+            padding: "12px 24px",
             background: "var(--bg-surface)",
             borderBottom: "1px solid var(--border-subtle)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            flexShrink: 0,
           }}
         >
-          <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)" }}>
+          <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--text-muted)" }}>
             {expenses.length} Records Found
           </span>
           <button className="btn btn-primary btn-sm" onClick={onOpenAddModal}>
@@ -110,14 +108,14 @@ export const ExpenseDrawer = ({ onClose, onRefresh, onOpenAddModal }) => {
         </div>
 
         {/* Table Body */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+        <div className="drawer-content">
           {expenses.length === 0 ? (
             <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)", fontSize: "13.5px" }}>
               No expenses recorded yet. Add your rent, electricity, or salary expenses.
             </div>
           ) : (
-            <div className="table-container">
-              <table className="custom-table">
+            <div className="table-container" style={{ border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)" }}>
+              <table className="custom-table" style={{ margin: 0 }}>
                 <thead>
                   <tr>
                     <th>Title & Category</th>
@@ -169,4 +167,6 @@ export const ExpenseDrawer = ({ onClose, onRefresh, onOpenAddModal }) => {
       </div>
     </div>
   );
+
+  return createPortal(drawerContent, document.body);
 };

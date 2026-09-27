@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, UserPlus, Save, Phone, Calendar, DollarSign, ShieldAlert, Trash2 } from "lucide-react";
 import API from "../api/client";
 import { useToast } from "../context/ToastContext";
@@ -93,28 +94,36 @@ export const MemberModal = ({ member, onClose, onSuccess }) => {
     );
   }
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <div>
-            <h3 style={{ fontSize: "18px" }}>
+          <div style={{ flex: 1, minWidth: 0, paddingRight: "8px" }}>
+            <h3 style={{ fontSize: "18px", fontWeight: 800, margin: 0 }}>
               {isEditing ? "Edit Member Profile" : "Enroll New Gym Member"}
             </h3>
-            <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
+            <div style={{ fontSize: "12.5px", color: "var(--text-muted)", marginTop: "3px", lineHeight: 1.4 }}>
               {isEditing ? "Update membership details and fees" : "Add member to tenant roster and billing engine"}
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
             style={{
-              background: "transparent",
-              border: "none",
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "var(--radius-sm)",
               color: "var(--text-muted)",
               cursor: "pointer",
+              padding: "6px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
             }}
+            title="Close dialog"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
@@ -243,6 +252,7 @@ export const MemberModal = ({ member, onClose, onSuccess }) => {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

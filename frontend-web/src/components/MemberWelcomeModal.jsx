@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { 
   X, 
   MessageCircle, 
@@ -132,7 +133,7 @@ _Tip: Add this link to your phone's home screen for fast 1-tap gym entry._`
     window.open(whatsappUrl, "_blank", "noopener,noreferrer");
   };
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div 
         className="modal-dialog" 
@@ -172,16 +173,23 @@ _Tip: Add this link to your phone's home screen for fast 1-tap gym entry._`
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
             style={{
-              background: "transparent",
-              border: "none",
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "var(--radius-sm)",
               color: "var(--text-muted)",
               cursor: "pointer",
-              padding: "4px",
+              padding: "6px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
             }}
+            title="Close dialog"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
@@ -505,6 +513,7 @@ _Tip: Add this link to your phone's home screen for fast 1-tap gym entry._`
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

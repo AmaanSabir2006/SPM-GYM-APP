@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { 
   Users, 
   UserPlus, 
@@ -363,7 +364,7 @@ export const MembersView = () => {
       )}
 
       {/* Athlete Removal Confirmation Modal */}
-      {memberToDelete && (
+      {memberToDelete && createPortal(
         <div className="modal-overlay" onClick={() => !deleting && setMemberToDelete(null)}>
           <div 
             className="modal-dialog" 
@@ -439,7 +440,8 @@ export const MembersView = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

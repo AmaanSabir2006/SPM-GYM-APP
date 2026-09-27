@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Check, DollarSign, Building, Zap, Users, Wrench, Package, HelpCircle } from "lucide-react";
 import API from "../api/client";
 import { useToast } from "../context/ToastContext";
@@ -44,26 +45,34 @@ export const ExpenseModal = ({ onClose, onSuccess }) => {
     }
   };
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <div>
-            <h3 style={{ fontSize: "18px" }}>Log Gym Expense</h3>
-            <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
+          <div style={{ flex: 1, minWidth: 0, paddingRight: "8px" }}>
+            <h3 style={{ fontSize: "18px", fontWeight: 800, margin: 0 }}>Log Gym Expense</h3>
+            <div style={{ fontSize: "12.5px", color: "var(--text-muted)", marginTop: "3px", lineHeight: 1.4 }}>
               Record rent, electric bills, salaries, or equipment repair for Net Profit calculation.
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
             style={{
-              background: "transparent",
-              border: "none",
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "var(--radius-sm)",
               color: "var(--text-muted)",
               cursor: "pointer",
+              padding: "6px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
             }}
+            title="Close dialog"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
@@ -172,6 +181,7 @@ export const ExpenseModal = ({ onClose, onSuccess }) => {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
