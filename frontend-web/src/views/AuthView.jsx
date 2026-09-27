@@ -52,6 +52,19 @@ export const AuthView = () => {
 
   const [loading, setLoading] = useState(false);
 
+  // Live preview brand color for cursor ambient glow and buttons during onboarding
+  useEffect(() => {
+    if (mode === "register" && regPrimaryColor) {
+      document.documentElement.style.setProperty("--primary", regPrimaryColor);
+      document.documentElement.style.setProperty("--primary-glow", `${regPrimaryColor}45`);
+      document.documentElement.style.setProperty("--primary-light", `${regPrimaryColor}18`);
+    } else {
+      document.documentElement.style.setProperty("--primary", "#E11D48");
+      document.documentElement.style.setProperty("--primary-glow", "rgba(225, 29, 72, 0.25)");
+      document.documentElement.style.setProperty("--primary-light", "rgba(225, 29, 72, 0.08)");
+    }
+  }, [mode, regPrimaryColor]);
+
   // Auto-generate slug from gym name
   const handleGymNameChange = (e) => {
     const val = e.target.value;

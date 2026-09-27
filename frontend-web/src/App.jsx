@@ -10,6 +10,7 @@ import { AttendanceView } from "./views/AttendanceView";
 import { QRPosterModal } from "./components/QRPosterModal";
 import { AuthView } from "./views/AuthView";
 import { MemberScanView } from "./views/MemberScanView";
+import { AmbientCursorGlow } from "./components/AmbientCursorGlow";
 import API from "./api/client";
 
 const MainApp = () => {
@@ -127,6 +128,7 @@ export default function App() {
   return (
     <ToastProvider>
       <AuthProvider>
+        <AmbientCursorGlow />
         <MainApp />
       </AuthProvider>
     </ToastProvider>

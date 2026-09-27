@@ -1903,3 +1903,66 @@ h1, h2, h3, h4, h5, h6 {
     display: none;
   }
 }
+
+/* =============================
+   AMBIENT CURSOR GLOW (STUDIO SPOTLIGHT)
+   ============================= */
+
+.ambient-cursor-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.ambient-cursor-orb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin-top: -275px;
+  margin-left: -275px;
+  width: 550px;
+  height: 550px;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform, opacity;
+  background: radial-gradient(
+    circle,
+    var(--primary-glow) 0%,
+    var(--primary-light) 40%,
+    transparent 72%
+  );
+  filter: blur(55px);
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
+}
+
+[data-theme="dark"] .ambient-cursor-orb {
+  mix-blend-mode: screen;
+  filter: blur(60px);
+  background: radial-gradient(
+    circle,
+    var(--primary-glow) 0%,
+    var(--primary-light) 45%,
+    transparent 72%
+  );
+}
+
+:root:not([data-theme="dark"]) .ambient-cursor-orb {
+  mix-blend-mode: multiply;
+  filter: blur(50px);
+  background: radial-gradient(
+    circle,
+    var(--primary-light) 0%,
+    rgba(225, 29, 72, 0.04) 45%,
+    transparent 70%
+  );
+}
+
+.app-container,
+.auth-container {
+  position: relative;
+  z-index: 2;
+}
+
