@@ -174,7 +174,7 @@ export const AuthView = () => {
               <div>
                 <h1 style={{ fontSize: "22px", fontWeight: 800, color: "var(--text-main)" }}>GymTrack</h1>
                 <div style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>
-                  Commercial Multi-Tenant SaaS
+                  Smart Gym Management Platform
                 </div>
               </div>
             </div>
@@ -206,7 +206,7 @@ export const AuthView = () => {
                 <div>
                   <div style={{ fontWeight: 700, fontSize: "14px", color: "var(--text-main)" }}>Contactless QR Entrance Scanner</div>
                   <div style={{ fontSize: "12.5px", color: "var(--text-muted)" }}>
-                    Fixed gym entrance poster. Anti-duplicate suppression built-in.
+                    Instant entrance check-in via printed QR code. Prevents double-scanning.
                   </div>
                 </div>
               </div>
@@ -216,9 +216,9 @@ export const AuthView = () => {
                   <ShieldCheck size={17} />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: "14px", color: "var(--text-main)" }}>Multi-Tenant Data Isolation</div>
+                  <div style={{ fontWeight: 700, fontSize: "14px", color: "var(--text-main)" }}>100% Private & Isolated Gym Data</div>
                   <div style={{ fontSize: "12.5px", color: "var(--text-muted)" }}>
-                    Strict <code style={{ color: "var(--primary)", fontWeight: 700 }}>gym_id</code> scoping with custom branding themes.
+                    Your member records, fees, and revenue data are strictly private to your gym.
                   </div>
                 </div>
               </div>
@@ -226,7 +226,7 @@ export const AuthView = () => {
           </div>
 
           <div style={{ marginTop: "40px", fontSize: "12px", color: "var(--text-dim)" }}>
-            © 2026 GymTrack Technologies. Cloud PostgreSQL Verified.
+            © 2026 GymTrack Technologies. All rights reserved.
           </div>
         </div>
 
@@ -329,9 +329,9 @@ export const AuthView = () => {
             /* Register Form */
             <form onSubmit={handleRegisterSubmit}>
               <div style={{ marginBottom: "16px" }}>
-                <h3 style={{ fontSize: "20px", marginBottom: "4px", color: "var(--text-main)" }}>Onboard Your Gym Tenant</h3>
+                <h3 style={{ fontSize: "20px", marginBottom: "4px", color: "var(--text-main)" }}>Register Your Gym Facility</h3>
                 <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                  Create your gym tenant profile and owner account in 1 click.
+                  Create your gym profile and owner account to get started.
                 </p>
               </div>
 
@@ -457,7 +457,7 @@ export const AuthView = () => {
                 style={{ width: "100%", padding: "12px", marginTop: "16px" }}
                 disabled={loading}
               >
-                {loading ? "Creating Tenant..." : "Launch Gym Platform"}
+                {loading ? "Setting Up Gym..." : "Launch Gym Platform"}
                 <ArrowRight size={16} />
               </button>
             </form>

@@ -113,11 +113,11 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
               </span>
               <span className="athletic-badge badge-elite">
                 <Building2 size={12} style={{ marginRight: 5, verticalAlign: "middle" }} />
-                <span>{gym?.name || "IRON ARENA"}</span>
+                <span>{gym?.name || "Gym Overview"}</span>
               </span>
             </div>
             <h1 style={{ fontSize: "28px", fontWeight: 800, color: "var(--text-main)", marginBottom: "8px", letterSpacing: "-0.02em" }}>
-              Commercial Strength & Performance Hub
+              {gym?.name ? `${gym.name} Operations Hub` : "Gym Operations & Performance Hub"}
             </h1>
             <p style={{ color: "var(--text-muted)", fontSize: "14px", maxWidth: "600px", fontWeight: 500 }}>
               Automated fee recovery ledger, operational expense tracking, and real-time net profit analytics.
@@ -317,14 +317,14 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
               Live Workout Scans Today ({todayAttendance.length})
             </h3>
             <button className="btn btn-secondary btn-sm" onClick={() => onNavigate("attendance")}>
-              Full Roster
+              View Attendance
             </button>
           </div>
 
           {todayAttendance.length === 0 ? (
             <div style={{ textAlign: "center", padding: "44px 0", color: "var(--text-muted)", fontSize: "13.5px" }}>
               <Dumbbell size={36} color="var(--border-medium)" style={{ margin: "0 auto 10px" }} />
-              No athlete entrance check-ins logged yet today.
+              No entrance check-ins logged yet today.
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "280px", overflowY: "auto" }}>

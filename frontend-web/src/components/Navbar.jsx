@@ -59,11 +59,8 @@ export const Navbar = ({ activeTab, setActiveTab, alertsData, onRefreshAlerts })
             )}
           </div>
           <div className="brand-meta">
-            <h1>
-              {gym?.name || "GymTrack"}
-              <span className="brand-tag">SaaS</span>
-            </h1>
-            <div className="brand-sub">Multi-Tenant Management Portal</div>
+            <h1>{gym?.name || "GymTrack"}</h1>
+            <div className="brand-sub">Gym Management Portal</div>
           </div>
         </div>
 
@@ -120,11 +117,6 @@ export const Navbar = ({ activeTab, setActiveTab, alertsData, onRefreshAlerts })
 
         {/* Right Actions */}
         <div className="navbar-actions">
-          {/* API Status indicator */}
-          <div className="status-badge" title="Connected to Cloud PostgreSQL">
-            <span className="status-pulse"></span>
-            Cloud Online
-          </div>
 
           {/* Theme Toggle Button */}
           <button

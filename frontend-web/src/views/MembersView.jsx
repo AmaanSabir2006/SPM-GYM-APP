@@ -85,9 +85,9 @@ export const MembersView = () => {
   }, [searchTerm]);
 
   const getAthleteTier = (fee) => {
-    if (fee >= 6000) return { label: "ELITE PRO", class: "badge-elite" };
-    if (fee >= 4000) return { label: "ATHLETE", class: "badge-pro" };
-    return { label: "GYM PASS", class: "badge-gym" };
+    if (fee >= 6000) return { label: "PREMIUM", class: "badge-elite" };
+    if (fee >= 4000) return { label: "STANDARD", class: "badge-pro" };
+    return { label: "BASIC", class: "badge-gym" };
   };
 
   return (
@@ -97,25 +97,25 @@ export const MembersView = () => {
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
             <span className="athletic-badge badge-pro">
-              <span>SQUAD DIRECTORY</span>
+              <span>MEMBER DIRECTORY</span>
             </span>
             <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 700 }}>
-              {members.length} ATHLETES REGISTERED
+              {members.length} MEMBERS REGISTERED
             </span>
           </div>
-          <h2 style={{ fontSize: "24px" }}>Athlete Roster & Iron Squad</h2>
+          <h2 style={{ fontSize: "24px" }}>Gym Members & Athlete Directory</h2>
           <p style={{ color: "var(--text-muted)", fontSize: "13.5px" }}>
-            Manage gym athlete memberships, custom billing cycles, and contactless QR access states.
+            Manage gym memberships, monthly dues billing, and contactless QR entrance access.
           </p>
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
           <button className="btn btn-secondary btn-sm" onClick={fetchMembers} disabled={loading}>
             <RefreshCw size={15} className={loading ? "spin" : ""} />
-            Sync Roster
+            Sync Members
           </button>
           <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>
             <Dumbbell size={15} />
-            Enroll Athlete
+            Enroll Member
           </button>
         </div>
       </div>
@@ -194,7 +194,7 @@ export const MembersView = () => {
               <tr>
                 <td colSpan="8" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
                   <Dumbbell size={32} color="var(--border-medium)" style={{ margin: "0 auto 8px" }} />
-                  {loading ? "Loading squad roster..." : "No athletes found in current filter."}
+                  {loading ? "Loading member directory..." : "No members found in current filter."}
                 </td>
               </tr>
             ) : (

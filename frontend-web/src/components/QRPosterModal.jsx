@@ -126,7 +126,7 @@ export const QRPosterModal = () => {
 
         {/* Catchphrase */}
         <div style={{ maxWidth: "420px", margin: "0 auto 32px", fontSize: "15px", color: "#475569" }}>
-          Hold your smartphone camera over the QR code inside the <strong>GymTrack Mobile App</strong> to record your workout entrance.
+          Scan this entrance QR code with your smartphone camera or digital member pass to record your workout check-in.
         </div>
 
         {/* High-Resolution QR Canvas Box */}
@@ -160,12 +160,12 @@ export const QRPosterModal = () => {
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "20px", fontSize: "13px", color: "#64748B" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <ShieldCheck size={16} color="#059669" />
-            <span style={{ fontWeight: 600 }}>Anti-Duplicate Protected</span>
+            <span style={{ fontWeight: 600 }}>Attendance Verified</span>
           </div>
           <span>•</span>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <Sparkles size={16} color="var(--primary)" />
-            <span style={{ fontWeight: 600 }}>Instant Cloud Log</span>
+            <span style={{ fontWeight: 600 }}>Instant Check-In Log</span>
           </div>
         </div>
 

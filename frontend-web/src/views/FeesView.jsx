@@ -88,15 +88,15 @@ export const FeesView = ({ onRefreshAlerts }) => {
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
             <span className="athletic-badge badge-pro">
-              <span>FINANCIAL ENGINE</span>
+              <span>FEE MANAGEMENT</span>
             </span>
             <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 700 }}>
-              AUTO FEE RECOVERY & WHATSAPP DISPATCH
+              AUTOMATED DUES & WHATSAPP REMINDERS
             </span>
           </div>
-          <h2 style={{ fontSize: "24px" }}>Athletic Dues & Financial Recovery Hub</h2>
+          <h2 style={{ fontSize: "24px" }}>Membership Dues & Fee Collection Ledger</h2>
           <p style={{ color: "var(--text-muted)", fontSize: "13.5px" }}>
-            1-tap personalized WhatsApp recovery reminders to keep member access and cash flow uninterrupted.
+            1-tap personalized WhatsApp reminders to follow up on pending dues and maintain steady cash flow.
           </p>
         </div>
         <div style={{ display: "flex", gap: "10px" }}>

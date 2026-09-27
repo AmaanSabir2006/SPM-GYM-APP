@@ -969,7 +969,7 @@ export const MemberScanView = () => {
 
       {/* Footer Support Text */}
       <div style={{ marginTop: "24px", textAlign: "center", color: "#64748B", fontSize: "12px" }}>
-        GymTrack Athlete Pass • Secure Tenant Access Protocol
+        GymTrack Member Pass • Verified Check-In System
       </div>
 
       {/* Laser Scan Animation Keyframes */}

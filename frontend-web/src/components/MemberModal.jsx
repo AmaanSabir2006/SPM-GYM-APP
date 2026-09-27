@@ -109,7 +109,7 @@ export const MemberModal = ({ member, onClose, onSuccess }) => {
               {isEditing ? "Edit Member Profile" : "Enroll New Gym Member"}
             </h3>
             <div style={{ fontSize: "12.5px", color: "var(--text-muted)", marginTop: "3px", lineHeight: 1.4 }}>
-              {isEditing ? "Update membership details and fees" : "Add member to tenant roster and billing engine"}
+              {isEditing ? "Update membership details and fees" : "Register a new member and set monthly membership dues"}
             </div>
           </div>
           <button
