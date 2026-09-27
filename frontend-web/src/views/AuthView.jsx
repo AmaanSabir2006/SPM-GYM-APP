@@ -106,6 +106,7 @@ export const AuthView = () => {
       }}
     >
       <div
+        className="auth-container"
         style={{
           maxWidth: "1050px",
           width: "100%",
@@ -116,10 +117,12 @@ export const AuthView = () => {
           border: "1px solid var(--border-subtle)",
           boxShadow: "0 20px 50px -10px rgba(15, 23, 42, 0.1), 0 10px 20px -5px rgba(15, 23, 42, 0.04)",
           overflow: "hidden",
+          animation: "scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both",
         }}
       >
         {/* Left Side: Brand Showcase */}
         <div
+          className="auth-brand-panel"
           style={{
             padding: "48px 40px",
             background: "linear-gradient(145deg, #F8FAFC 0%, #EFF6FF 100%)",

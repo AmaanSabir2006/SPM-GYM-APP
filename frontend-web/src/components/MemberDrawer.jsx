@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import { X, Phone, Calendar, Receipt, Clock, CheckCircle2, AlertCircle, MessageCircle, CreditCard, Trash2 } from "lucide-react";
 import API from "../api/client";
 import { useToast } from "../context/ToastContext";

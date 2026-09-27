@@ -234,7 +234,7 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
       </div>
 
       {/* Two Column Layout: Quick Actions & Live Attendance */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }} className="dashboard-bottom-grid">
         {/* Left Column: Quick Facility Actions */}
         <div className="glass-card accent-card">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
@@ -249,17 +249,7 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
 
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div 
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "14px 18px",
-                background: "var(--bg-surface)",
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--border-subtle)",
-                cursor: "pointer",
-                transition: "all 0.2s"
-              }}
+              className="action-row"
               onClick={() => setShowExpenseModal(true)}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
@@ -277,17 +267,7 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
             </div>
 
             <div 
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "14px 18px",
-                background: "var(--bg-surface)",
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--border-subtle)",
-                cursor: "pointer",
-                transition: "all 0.2s"
-              }}
+              className="action-row"
               onClick={() => onNavigate("fees")}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
@@ -305,17 +285,7 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
             </div>
 
             <div 
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "14px 18px",
-                background: "var(--bg-surface)",
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--border-subtle)",
-                cursor: "pointer",
-                transition: "all 0.2s"
-              }}
+              className="action-row"
               onClick={() => onNavigate("qr-poster")}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
@@ -356,16 +326,7 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
               {todayAttendance.slice(0, 5).map((att) => (
                 <div
                   key={att.id}
-                  style={{
-                    padding: "12px 14px",
-                    background: "var(--bg-surface)",
-                    borderRadius: "var(--radius-sm)",
-                    border: "1px solid var(--border-subtle)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    fontSize: "13px",
-                  }}
+                  className="feed-item"
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#ECFDF5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center" }}>

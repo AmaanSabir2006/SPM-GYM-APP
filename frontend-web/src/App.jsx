@@ -50,22 +50,23 @@ const MainApp = () => {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: "16px",
+          gap: "20px",
           color: "var(--text-muted)",
         }}
       >
         <div
           style={{
-            width: "48px",
-            height: "48px",
+            width: "44px",
+            height: "44px",
             borderRadius: "50%",
-            border: "3px solid var(--border-medium)",
+            border: "3px solid var(--border-subtle)",
             borderTopColor: "var(--primary)",
-            animation: "spin 0.8s linear infinite",
           }}
+          className="spin"
         />
-        <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
-        <div style={{ fontSize: "14px", fontWeight: 600 }}>Loading GymTrack Platform...</div>
+        <div style={{ fontSize: "14px", fontWeight: 600, letterSpacing: "-0.01em" }}>
+          Loading GymTrack Platform...
+        </div>
       </div>
     );
   }
@@ -85,7 +86,7 @@ const MainApp = () => {
       />
 
       {/* Main Content Area */}
-      <main className="main-content">
+      <main className="main-content" key={activeTab}>
         {/* Urgent Action Banner */}
         {activeTab !== "fees" && (
           <ActionBanner
