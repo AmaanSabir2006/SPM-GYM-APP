@@ -8,23 +8,13 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import get_current_tenant_gym_id
 from app.core.security import create_access_token
+from app.core.phone import normalize_phone_number, get_phone_lookup_variants, format_whatsapp_phone
 from app.models.gym import Gym
+from app.models.user import User
 from app.models.member import Member
 from app.schemas.member import MemberCreate, MemberUpdate, MemberResponse, MemberWelcomeResponse
 
 router = APIRouter()
-
-
-def format_whatsapp_phone(raw_phone: str) -> str:
-    """Standardizes Pakistani and international phone numbers for WhatsApp wa.me links."""
-    digits = "".join(filter(str.isdigit, raw_phone))
-    if digits.startswith("0"):
-        digits = "92" + digits[1:]
-    elif digits.startswith("92"):
-        pass
-    elif len(digits) == 10 and digits.startswith("3"):
-        digits = "92" + digits
-    return digits
 
 
 def build_member_welcome_card(
@@ -51,17 +41,17 @@ def build_member_welcome_card(
     due_date_str = f"{day}{suffix} of every month"
 
     whatsapp_message = (
-        f"🏋️ *Welcome to {gym.name}!*\n\n"
+        f"*Welcome to {gym.name}*\n\n"
         f"Salam *{member.full_name}*,\n"
-        f"Your gym membership is confirmed and active! Here are your membership details:\n\n"
-        f"🏢 *Gym:* {gym.name}\n"
-        f"💰 *Monthly Fee:* PKR {int(member.monthly_fee):,}\n"
-        f"📅 *Fee Renewal Date:* {due_date_str}\n\n"
-        f"📲 *Your Digital Entrance Scanner:*\n"
-        f"Whenever you arrive at the gym, tap your pass link below to open your camera, scan the entrance QR code, and enter:\n"
+        f"Your gym membership is confirmed and active. Membership details:\n\n"
+        f"• *Facility:* {gym.name}\n"
+        f"• *Monthly Fee:* PKR {int(member.monthly_fee):,}\n"
+        f"• *Renewal Due Date:* {due_date_str}\n\n"
+        f"*Digital Entrance Pass:*\n"
+        f"When arriving at the facility, open your entrance scanner link below to scan the entrance QR code:\n"
         f"{scan_url}\n\n"
-        f"⚠️ _Note: If this link is not clickable on your phone, simply reply 'OK' to this message or save this number to your contacts to activate it!_\n\n"
-        f"⚡ _Tip: Add this link to your phone's home screen for fast 1-tap gym entry!_"
+        f"_Note: If this link is not clickable yet on your phone, reply 'OK' or save this contact to enable links._\n"
+        f"_Tip: Add this pass link to your phone home screen for fast 1-tap gym access._"
     )
 
     clean_phone = format_whatsapp_phone(member.phone)
@@ -111,11 +101,63 @@ async def create_member(
 ):
     """
     Register a new member scoped to current tenant gym.
+    Validates phone uniqueness and prevents assigning the gym owner's phone number.
     """
+    raw_phone = (member_in.phone or "").strip()
+    digits = "".join(filter(str.isdigit, raw_phone))
+    if len(digits) < 10:
+        raise HTTPException(
+            status_code=400,
+            detail="A valid mobile or WhatsApp phone number (minimum 10 digits) is required to enroll a member."
+        )
+
+    phone_variants = get_phone_lookup_variants(raw_phone)
+
+    # Disallow enrolling a member using the gym owner's phone number
+    owner_collision = await db.execute(
+        select(User).where(
+            User.role == "owner",
+            User.phone.in_(phone_variants)
+        )
+    )
+    if owner_collision.scalars().first():
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot enroll a member with the gym owner's phone number. Members must have their own unique mobile number."
+        )
+
+    # Disallow enrolling a member using a staff account phone number for this gym
+    staff_collision = await db.execute(
+        select(User).where(
+            User.gym_id == gym_id,
+            User.phone.in_(phone_variants)
+        )
+    )
+    if staff_collision.scalars().first():
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot enroll a member with a gym staff account phone number."
+        )
+
+    # Disallow duplicate member phone within current gym roster
+    duplicate_member = await db.execute(
+        select(Member).where(
+            Member.gym_id == gym_id,
+            Member.phone.in_(phone_variants)
+        )
+    )
+    if duplicate_member.scalars().first():
+        raise HTTPException(
+            status_code=400,
+            detail="A member with this phone number is already registered in your gym roster."
+        )
+
+    normalized_phone = normalize_phone_number(raw_phone)
+
     new_member = Member(
         gym_id=gym_id,
-        full_name=member_in.full_name,
-        phone=member_in.phone,
+        full_name=member_in.full_name.strip(),
+        phone=normalized_phone,
         emergency_contact=member_in.emergency_contact,
         join_date=member_in.join_date or date.today(),
         monthly_fee=member_in.monthly_fee,
@@ -154,7 +196,7 @@ async def update_member(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Update member details.
+    Update member details, validating phone uniqueness and owner protection.
     """
     result = await db.execute(
         select(Member).where(Member.id == member_id, Member.gym_id == gym_id)
@@ -164,6 +206,49 @@ async def update_member(
         raise HTTPException(status_code=404, detail="Member not found.")
 
     update_data = member_in.model_dump(exclude_unset=True)
+
+    if "phone" in update_data and update_data["phone"]:
+        raw_phone = str(update_data["phone"]).strip()
+        digits = "".join(filter(str.isdigit, raw_phone))
+        if len(digits) < 10:
+            raise HTTPException(
+                status_code=400,
+                detail="A valid mobile or WhatsApp phone number (minimum 10 digits) is required."
+            )
+        phone_variants = get_phone_lookup_variants(raw_phone)
+
+        # Disallow gym owner's phone
+        owner_collision = await db.execute(
+            select(User).where(
+                User.role == "owner",
+                User.phone.in_(phone_variants)
+            )
+        )
+        if owner_collision.scalars().first():
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot assign a gym owner's phone number to a member profile."
+            )
+
+        # Disallow duplicate member phone within this gym (excluding current member)
+        duplicate_member = await db.execute(
+            select(Member).where(
+                Member.gym_id == gym_id,
+                Member.id != member_id,
+                Member.phone.in_(phone_variants)
+            )
+        )
+        if duplicate_member.scalars().first():
+            raise HTTPException(
+                status_code=400,
+                detail="Another member in your gym already has this phone number."
+            )
+
+        update_data["phone"] = normalize_phone_number(raw_phone)
+
+    if "full_name" in update_data and update_data["full_name"]:
+        update_data["full_name"] = update_data["full_name"].strip()
+
     for field, value in update_data.items():
         setattr(member, field, value)
 

@@ -67,16 +67,22 @@ export const AuthView = () => {
 
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
+    const cleanPhone = (regOwnerPhone || "").replace(/\D/g, "");
+    if (!cleanPhone || cleanPhone.length < 10) {
+      showToast("Please enter a valid mobile or WhatsApp phone number (minimum 10 digits).", "error");
+      return;
+    }
+
     setLoading(true);
     try {
       await registerGym({
-        gym_name: regGymName,
-        gym_slug: regGymSlug,
+        gym_name: regGymName.trim(),
+        gym_slug: regGymSlug.trim(),
         primary_color: regPrimaryColor,
-        owner_name: regOwnerName,
-        owner_email: regOwnerEmail,
+        owner_name: regOwnerName.trim(),
+        owner_email: regOwnerEmail.trim(),
         owner_password: regOwnerPassword,
-        owner_phone: regOwnerPhone || null,
+        owner_phone: regOwnerPhone.trim(),
       });
       showToast(`Welcome! ${regGymName} is now live with dynamic white-label branding.`, "success");
     } catch (err) {
@@ -412,14 +418,21 @@ export const AuthView = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Owner Phone (WhatsApp)</label>
+                  <label className="form-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span>Owner Phone (WhatsApp)</span>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Required &amp; Unique</span>
+                  </label>
                   <input
-                    type="text"
+                    type="tel"
                     className="form-input"
                     placeholder="03001234567"
                     value={regOwnerPhone}
                     onChange={(e) => setRegOwnerPhone(e.target.value)}
+                    required
                   />
+                  <div style={{ fontSize: "11.5px", color: "var(--text-muted)", marginTop: "4px" }}>
+                    Must be a unique mobile/WhatsApp number not registered to another gym.
+                  </div>
                 </div>
               </div>
 

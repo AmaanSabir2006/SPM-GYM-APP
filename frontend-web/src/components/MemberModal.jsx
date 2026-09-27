@@ -59,6 +59,12 @@ export const MemberModal = ({ member, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const cleanPhone = (formData.phone || "").replace(/\D/g, "");
+    if (!cleanPhone || cleanPhone.length < 10) {
+      showToast("Please enter a valid athlete mobile or WhatsApp number (minimum 10 digits).", "error");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -144,9 +150,12 @@ export const MemberModal = ({ member, onClose, onSuccess }) => {
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
               <div className="form-group">
-                <label className="form-label">Phone Number (WhatsApp)</label>
+                <label className="form-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>Phone Number (WhatsApp)</span>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Unique to athlete</span>
+                </label>
                 <input
-                  type="text"
+                  type="tel"
                   name="phone"
                   className="form-input"
                   placeholder="03001234567"
@@ -154,6 +163,9 @@ export const MemberModal = ({ member, onClose, onSuccess }) => {
                   onChange={handleChange}
                   required
                 />
+                <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+                  Cannot be the gym owner or staff phone number.
+                </div>
               </div>
 
               <div className="form-group">

@@ -4,8 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.core.database import get_db
 from app.core.security import get_password_hash, verify_password, create_access_token
+from app.core.phone import normalize_phone_number, get_phone_lookup_variants
 from app.models.gym import Gym
 from app.models.user import User
+from app.models.member import Member
 from app.schemas.auth import Token, LoginRequest, GymRegistrationRequest
 
 router = APIRouter()
@@ -16,14 +18,42 @@ async def register_gym(request: GymRegistrationRequest, db: AsyncSession = Depen
     """
     Onboard a brand new gym tenant and create the gym owner user account.
     """
+    # Validate phone format
+    raw_phone = (request.owner_phone or "").strip()
+    digits = "".join(filter(str.isdigit, raw_phone))
+    if len(digits) < 10:
+        raise HTTPException(
+            status_code=400,
+            detail="A valid mobile or WhatsApp phone number (at least 10 digits) is required for onboarding."
+        )
+
     # Check if slug or email exists
     existing_gym = await db.execute(select(Gym).where(Gym.slug == request.gym_slug))
-    if existing_gym.scalar_one_or_none():
+    if existing_gym.scalars().first():
         raise HTTPException(status_code=400, detail="A gym with this slug already exists.")
 
     existing_user = await db.execute(select(User).where(User.email == request.owner_email))
-    if existing_user.scalar_one_or_none():
+    if existing_user.scalars().first():
         raise HTTPException(status_code=400, detail="A user with this email already exists.")
+
+    # Check if phone number already exists in User accounts
+    phone_variants = get_phone_lookup_variants(raw_phone)
+    existing_phone_user = await db.execute(select(User).where(User.phone.in_(phone_variants)))
+    if existing_phone_user.scalars().first():
+        raise HTTPException(
+            status_code=400,
+            detail="A gym owner or user with this phone number is already registered. Please sign in or use a different phone number."
+        )
+
+    # Check if phone number already exists in Member roster
+    existing_phone_member = await db.execute(select(Member).where(Member.phone.in_(phone_variants)))
+    if existing_phone_member.scalars().first():
+        raise HTTPException(
+            status_code=400,
+            detail="This phone number is already registered to a gym member. Gym owner accounts must use an independent mobile number."
+        )
+
+    normalized_phone = normalize_phone_number(raw_phone)
 
     # Create Gym tenant
     qr_token = f"gym_{request.gym_slug}_{secrets.token_hex(8)}"
@@ -41,7 +71,7 @@ async def register_gym(request: GymRegistrationRequest, db: AsyncSession = Depen
     owner_user = User(
         gym_id=new_gym.id,
         email=request.owner_email,
-        phone=request.owner_phone,
+        phone=normalized_phone,
         hashed_password=hashed_pwd,
         full_name=request.owner_name,
         role="owner",
