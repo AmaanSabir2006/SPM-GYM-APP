@@ -89,22 +89,22 @@ export const MemberWelcomeModal = ({ memberId, onClose }) => {
   const dueDayStr = rawData ? `${rawData.billing_cycle_day}${getDaySuffix(rawData.billing_cycle_day)} of every month` : "";
 
   const whatsappMessage = rawData ? (
-    `🏋️ *Welcome to ${rawData.gym_name}!*
+    `*Welcome to ${rawData.gym_name}*
 
 Salam *${rawData.member_name}*,
-Your gym membership is confirmed and active! Here are your membership details:
+Your membership is confirmed and active. Here are your membership details:
 
-🏢 *Gym:* ${rawData.gym_name}
-💰 *Monthly Fee:* PKR ${Number(rawData.monthly_fee).toLocaleString()}
-📅 *Fee Renewal Date:* ${dueDayStr}
+*Gym:* ${rawData.gym_name}
+*Monthly Fee:* PKR ${Number(rawData.monthly_fee).toLocaleString()}
+*Renewal Date:* ${dueDayStr}
 
-📲 *Your Personal Gym Entrance Pass & Scanner:*
+*Your Personal Gym Entrance Pass & Scanner:*
 Whenever you arrive at the gym, tap your pass link below to open your camera, scan the entrance QR code, and enter:
-👉 ${scanUrl}
+${scanUrl}
 
-⚠️ *NOTE:* If the link above is not clickable on your phone, simply *reply 'OK' to this message* or save our contact. WhatsApp will instantly activate the link!
+*NOTE:* If the link above is not clickable on your phone, simply *reply 'OK' to this message* or save our contact. WhatsApp will instantly activate the link!
 
-⚡ _Tip: Add this link to your phone's home screen for fast 1-tap gym entry!_`
+_Tip: Add this link to your phone's home screen for fast 1-tap gym entry._`
   ) : "";
 
   const cleanPhone = rawData?.phone ? rawData.phone.replace(/[^0-9]/g, "") : "";

@@ -199,9 +199,9 @@ export const FeesView = ({ onRefreshAlerts }) => {
                   cleanPhone = "92" + cleanPhone.slice(1);
                 }
 
-                // Motivational fitness reminder template
+                // Professional fee reminder notification template
                 const msg = encodeURIComponent(
-                  `Assalam-o-Alaikum ${memberName}!\n\nKeep crushing your workouts at ${gymName}! 💪\nThis is a quick reminder regarding your monthly membership fee of Rs. ${Number(rec.amount_due).toLocaleString()} (Due: ${new Date(rec.due_date).toLocaleDateString()}).\nKindly clear your dues via EasyPaisa, JazzCash, or at the front desk to keep your contactless QR entrance active.\n\nThank you!`
+                  `Assalam-o-Alaikum ${memberName},\n\nThis is a notification from ${gymName} regarding your monthly membership fee of Rs. ${Number(rec.amount_due).toLocaleString()} (Due Date: ${new Date(rec.due_date).toLocaleDateString()}).\nKindly clear your dues via EasyPaisa, JazzCash, or at the front desk to ensure uninterrupted contactless gym access.\n\nThank you.`
                 );
                 const whatsappUrl = `https://wa.me/${cleanPhone}?text=${msg}`;
 
@@ -218,10 +218,11 @@ export const FeesView = ({ onRefreshAlerts }) => {
                       Rs. {Number(rec.amount_due).toLocaleString()}
                     </td>
                     <td>
-                      <span className={`badge badge-${rec.payment_status}`}>
-                        {rec.payment_status === "overdue" && "🔥 "}
-                        {rec.payment_status === "paid" && "✅ "}
-                        {rec.payment_status}
+                      <span className={`badge badge-${rec.payment_status}`} style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                        {rec.payment_status === "overdue" && <AlertCircle size={11} />}
+                        {rec.payment_status === "paid" && <CheckCircle2 size={11} />}
+                        {rec.payment_status === "pending" && <Clock size={11} />}
+                        <span>{rec.payment_status}</span>
                       </span>
                     </td>
                     <td>

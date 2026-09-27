@@ -10,7 +10,8 @@ import {
   Calendar,
   RotateCcw,
   Upload,
-  Clock
+  Clock,
+  Smartphone
 } from "lucide-react";
 import axios from "axios";
 import confetti from "canvas-confetti";
@@ -752,8 +753,9 @@ export const MemberScanView = () => {
                 />
               </label>
 
-              <span style={{ fontSize: "11px", color: "#94A3B8", marginTop: "8px" }}>
-                ⚡ Works on all mobile devices & browsers
+              <span style={{ fontSize: "11px", color: "#94A3B8", marginTop: "8px", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                <Smartphone size={13} style={{ color: "#E63946" }} />
+                <span>Compatible with all mobile devices & browsers</span>
               </span>
             </div>
           )}

@@ -21,7 +21,10 @@ import {
   Activity,
   PlusCircle,
   Receipt,
-  Scale
+  Scale,
+  Building2,
+  ArrowRight,
+  ArrowDownRight
 } from "lucide-react";
 import API from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -105,10 +108,12 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
               <span className="athletic-badge badge-pro">
-                <span>⚡ LIVE GYM OPERATIONS</span>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981", display: "inline-block", marginRight: 6 }} />
+                <span>LIVE GYM OPERATIONS</span>
               </span>
               <span className="athletic-badge badge-elite">
-                <span>🏆 {gym?.name || "IRON ARENA"}</span>
+                <Building2 size={12} style={{ marginRight: 5, verticalAlign: "middle" }} />
+                <span>{gym?.name || "IRON ARENA"}</span>
               </span>
             </div>
             <h1 style={{ fontSize: "28px", fontWeight: 800, color: "var(--text-main)", marginBottom: "8px", letterSpacing: "-0.02em" }}>
@@ -154,7 +159,7 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
         <div className="stat-card" style={{ border: `2px solid ${isProfitable ? "var(--color-success-border)" : "var(--color-danger-border)"}`, background: isProfitable ? "var(--color-success-bg)" : "var(--color-danger-bg)" }}>
           <div className="stat-header">
             <span className="stat-label" style={{ color: isProfitable ? "var(--color-success)" : "var(--color-danger)" }}>
-              💰 Net Profit ({profitData?.current_month_label?.split(" ")[0] || "Month"})
+              Net Profit ({profitData?.current_month_label?.split(" ")[0] || "Month"})
             </span>
             <div className="stat-icon" style={{ background: isProfitable ? "rgba(5, 150, 105, 0.2)" : "rgba(220, 38, 38, 0.2)", color: isProfitable ? "var(--color-success)" : "var(--color-danger)" }}>
               {isProfitable ? <TrendingUp size={22} /> : <TrendingDown size={22} />}
@@ -164,8 +169,8 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
             Rs. {netProfit.toLocaleString()}
           </div>
           <div className="stat-footer">
-            <span style={{ fontWeight: 800, color: isProfitable ? "var(--color-success)" : "var(--color-danger)" }}>
-              {profitData?.is_profit_increase ? "▲" : "▼"} {profitData?.profit_growth_percent > 0 ? `+${profitData?.profit_growth_percent}%` : `${profitData?.profit_growth_percent}%`}
+            <span style={{ fontWeight: 800, color: isProfitable ? "var(--color-success)" : "var(--color-danger)", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+              {profitData?.is_profit_increase ? <ArrowUpRight size={14} style={{ display: "inline", verticalAlign: "text-bottom" }} /> : <ArrowDownRight size={14} style={{ display: "inline", verticalAlign: "text-bottom" }} />} {profitData?.profit_growth_percent > 0 ? `+${profitData?.profit_growth_percent}%` : `${profitData?.profit_growth_percent}%`}
             </span>
             <span>• Margin: {profitData?.profit_margin_percent || 0}%</span>
           </div>
@@ -174,7 +179,7 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
         {/* Collected Revenue */}
         <div className="stat-card">
           <div className="stat-header">
-            <span className="stat-label">⚡ Recovered Cash Flow</span>
+            <span className="stat-label">Recovered Cash Flow</span>
             <div className="stat-icon" style={{ background: "rgba(16, 185, 129, 0.12)", color: "var(--color-success)" }}>
               <CheckCircle2 size={20} />
             </div>
@@ -193,7 +198,7 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
         {/* Operational Expenses */}
         <div className="stat-card" style={{ cursor: "pointer" }} onClick={() => setShowExpenseDrawer(true)} title="Click to view all expenses">
           <div className="stat-header">
-            <span className="stat-label">📉 Gym Overhead / Expenses</span>
+            <span className="stat-label">Gym Overhead / Expenses</span>
             <div className="stat-icon" style={{ background: "var(--color-danger-bg)", color: "var(--color-danger)" }}>
               <Receipt size={20} />
             </div>
@@ -202,8 +207,8 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
             Rs. {profitData?.total_expenses?.toLocaleString() || "0"}
           </div>
           <div className="stat-footer">
-            <span style={{ color: "var(--primary)", fontWeight: 700 }}>
-              View & Manage Expenses ➔
+            <span style={{ color: "var(--primary)", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+              View & Manage Expenses <ArrowRight size={13} />
             </span>
           </div>
         </div>
@@ -211,7 +216,7 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
         {/* Pending Overdue Dues */}
         <div className="stat-card">
           <div className="stat-header">
-            <span className="stat-label">🔥 Overdue Athlete Dues</span>
+            <span className="stat-label">Overdue Athlete Dues</span>
             <div className="stat-icon" style={{ background: "rgba(245, 158, 11, 0.12)", color: "var(--color-warning)" }}>
               <Flame size={20} />
             </div>
