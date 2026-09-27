@@ -27,10 +27,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Set up CORS middleware for Web and Mobile clients
+# Set up CORS middleware for Web, Mobile and local LAN clients
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=r"^https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,6 +41,19 @@ app.add_middleware(
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
+import socket
+
+def get_lan_ip() -> str:
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
+
 @app.get("/api/health", tags=["Health"])
 async def health_check():
     """Service health check endpoint."""
@@ -47,4 +61,5 @@ async def health_check():
         "status": "healthy",
         "service": settings.PROJECT_NAME,
         "environment": settings.ENVIRONMENT,
+        "lan_ip": get_lan_ip(),
     }

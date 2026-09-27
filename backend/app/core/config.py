@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     # Supabase PostgreSQL Connection
     DATABASE_URL: str = "sqlite+aiosqlite:///./test.db"  # local fallback if no postgres provided yet
     
+    # Frontend URL for QR Scan Links
+    FRONTEND_URL: str = "http://127.0.0.1:5173"
+
     # CORS
     CORS_ORIGINS: List[str] = [
         "http://localhost:5173",

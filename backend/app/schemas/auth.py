@@ -22,4 +22,4 @@ class GymRegistrationRequest(BaseModel):
     owner_name: str
     owner_email: EmailStr
     owner_password: str
-    owner_phone: Optional[str] = None
+    owner_phone: str

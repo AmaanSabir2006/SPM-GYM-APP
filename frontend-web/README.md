@@ -1,25 +1,58 @@
-# GymTrack — Web Frontend (React + Vite)
+# 🏋️ GymTrack — Web Administration Portal (React SPA)
 
-> **Owner & Staff Administration Portal**  
-> **Lead**: Web Frontend Lead (Member 2)
+> **Owner & Front Desk Administration Dashboard**  
+> **Target Role**: Web Frontend Developer (Member 2)  
+> **API Base URL (Local)**: `http://127.0.0.1:8000/api/v1`  
+> **Interactive Swagger Documentation**: `http://127.0.0.1:8000/docs`
 
-## 🎯 Scope of Work
-- **Tech Stack**: React 18+, Vite, Vanilla CSS.
-- **Audience**: Gym Owners and Front Desk Staff accessing from any browser.
-- **Key Screens**:
-  1. **Login & Gym Onboarding**: Authenticate and retrieve JWT token.
-  2. **Owner Dashboard**: High-level financial KPIs (Expected vs. Collected, Pending/Overdue counts, Today's attendance).
-  3. **Member Directory**: Table of registered members, filterable by active/inactive status, quick search by phone.
-  4. **Fee Recovery & Ledger**: List of monthly fee dues, manual "Mark as Paid" modal, and 1-tap WhatsApp reminder trigger.
-  5. **Entrance QR Code Screen**: View/print the Gym Entrance QR poster encoding the gym token.
-  6. **Dynamic White-Label Branding**: On login, call `/api/v1/gyms/me` to retrieve gym logo, name, and accent color (`primary_color`), applying it across the UI dynamically.
+---
 
-## 🚀 Getting Started
+## 🎯 1. Overview & Architecture
+
+GymTrack Web is a Single Page Application (SPA) designed for **Gym Owners** and **Front Desk Staff**. It acts as the operational hub of the gym for:
+1. **Onboarding & Multi-Tenant Setup**: Registering gym businesses with isolated data.
+2. **Real-time Financial Intelligence**: Tracking expected revenue, collections, and overdue dues.
+3. **Automated WhatsApp Fee Recovery**: 1-tap reminders with pre-calculated amounts and payment options.
+4. **Member Management**: Roster maintenance, billing cycle tracking, and attendance logs.
+5. **Contactless Entrance Posters**: Generating printable QR code posters for mobile check-in.
+
+### Key Architectural Concepts:
+* **Multi-Tenant Isolation**: You never need to supply `gym_id` in your API bodies or query parameters. The backend automatically extracts `gym_id` from the owner's JWT Bearer token.
+* **White-Label Personalization**: After login, the app queries `GET /gyms/me` to retrieve the gym's official name, logo, and primary accent color.
+
+---
+
+## 🗺️ 2. Route & Page Sitemap
+
+| Route Path | Page Name | Primary User Purpose | Key Visible UI Components |
+|---|---|---|---|
+| `/login` | **Login Page** | Staff & Owner authentication | Sign-in card, Email/Password inputs, Error banner, Link to `/register` |
+| `/register` | **Gym Onboarding** | New gym tenant & admin creation | Business details form, Color picker, Submit button, Link to `/login` |
+| `/` | **Dashboard** | Daily command center & live analytics | Revenue KPI cards, Overdue alert banner, Attendance stats, Live check-in feed |
+| `/members` | **Member Directory** | Member roster & profile management | Search bar, Status filters, Members table, "Add Member" modal, "Member History" deep-dive modal |
+| `/fees` | **Fee Ledger** | Monthly billing & WhatsApp recovery | "Generate Dues" button, Status tabs, Fee records table, "Mark Paid" modal, WhatsApp action button |
+| `/qr-poster` | **Entrance QR** | Printable front-door check-in poster | Printable A4 card, Dynamic QR code, Gym branding, "Print" action button |
+
+---
+
+## 🚀 3. Quickstart & Local Setup
+
 ```bash
+# Navigate to web frontend folder
+cd frontend-web
+
 # Install dependencies
 npm install
 
 # Start Vite development server
 npm run dev
 ```
-The app will connect to the FastAPI backend running at `http://127.0.0.1:8000`.
+
+The web app connects to the FastAPI backend running at `http://127.0.0.1:8000`.
+
+---
+
+## 📚 4. Detailed Integration Guide
+
+For the exact API endpoints, request bodies, query parameters, and JSON response structures mapped to each page and UI component, refer to:
+👉 **[`INTEGRATION_GUIDE.md`](./INTEGRATION_GUIDE.md)**

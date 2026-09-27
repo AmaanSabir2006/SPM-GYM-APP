@@ -5,13 +5,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
 from app.core.database import get_db
 from app.core.deps import get_current_tenant_gym_id, get_current_token_payload, TokenPayload
+from app.core.security import create_access_token
 from app.models.attendance import AttendanceRecord
+from app.models.fee import FeeRecord
 from app.models.gym import Gym
 from app.models.member import Member
 from app.schemas.attendance import (
     AttendanceResponse,
     AttendanceStats,
     MemberAttendanceHistory,
+    MemberPassInfoResponse,
     QRCheckInRequest,
 )
 
@@ -42,23 +45,26 @@ async def qr_check_in(
             detail="Invalid Gym QR Code or you are scanning a code for a different gym.",
         )
 
-    # 2. Find Member linked to this user or member_id passed
+    # 2. Find Member linked to this member pass token or user or passed member_id
     member_id = check_in.member_id
     if not member_id:
-        member_res = await db.execute(
-            select(Member).where(Member.user_id == token_payload.sub, Member.gym_id == gym_id)
-        )
-        member = member_res.scalar_one_or_none()
-        if not member:
-            raise HTTPException(status_code=404, detail="No active gym membership found for this account.")
-        member_id = member.id
-    else:
-        member_res = await db.execute(
-            select(Member).where(Member.id == member_id, Member.gym_id == gym_id)
-        )
-        member = member_res.scalar_one_or_none()
-        if not member:
-            raise HTTPException(status_code=404, detail="Member does not belong to this gym.")
+        if token_payload.role == "member":
+            member_id = token_payload.sub
+        else:
+            member_res = await db.execute(
+                select(Member).where(Member.user_id == token_payload.sub, Member.gym_id == gym_id)
+            )
+            member_user = member_res.scalar_one_or_none()
+            if not member_user:
+                raise HTTPException(status_code=404, detail="No active gym membership found for this account.")
+            member_id = member_user.id
+
+    member_res = await db.execute(
+        select(Member).where(Member.id == member_id, Member.gym_id == gym_id)
+    )
+    member = member_res.scalar_one_or_none()
+    if not member:
+        raise HTTPException(status_code=404, detail="Member does not belong to this gym.")
 
     if member.status != "active":
         raise HTTPException(status_code=403, detail="Membership is inactive or suspended.")
@@ -186,4 +192,181 @@ async def get_member_attendance_history(
         total_check_ins=len(history),
         history=history,
     )
+
+
+@router.get("/member-pass-info", response_model=MemberPassInfoResponse)
+async def get_member_pass_info(
+    member_id: Optional[str] = Query(None),
+    token_payload: TokenPayload = Depends(get_current_token_payload),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Returns athlete profile, gym identity, and today's attendance status
+    for the athlete's personal mobile check-in view.
+    """
+    gym_id = token_payload.gym_id
+
+    # Resolve member_id
+    target_member_id = member_id
+    if not target_member_id:
+        if token_payload.role == "member":
+            target_member_id = token_payload.sub
+        else:
+            m_res = await db.execute(select(Member).where(Member.gym_id == gym_id).limit(1))
+            first_m = m_res.scalar_one_or_none()
+            if first_m:
+                target_member_id = first_m.id
+            else:
+                raise HTTPException(status_code=404, detail="No members found in gym.")
+
+    gym_res = await db.execute(select(Gym).where(Gym.id == gym_id))
+    gym = gym_res.scalar_one_or_none()
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gym record not found.")
+
+    member_res = await db.execute(
+        select(Member).where(Member.id == target_member_id, Member.gym_id == gym_id)
+    )
+    member = member_res.scalar_one_or_none()
+    if not member:
+        raise HTTPException(status_code=404, detail="Member profile not found.")
+
+    # Check today's attendance
+    start_of_today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_rec_res = await db.execute(
+        select(AttendanceRecord)
+        .where(
+            AttendanceRecord.gym_id == gym_id,
+            AttendanceRecord.member_id == member.id,
+            AttendanceRecord.check_in_time >= start_of_today,
+        )
+        .order_by(AttendanceRecord.check_in_time.desc())
+        .limit(1)
+    )
+    last_rec = today_rec_res.scalar_one_or_none()
+
+    total_res = await db.execute(
+        select(func.count(AttendanceRecord.id)).where(
+            AttendanceRecord.gym_id == gym_id,
+            AttendanceRecord.member_id == member.id,
+        )
+    )
+    total_count = total_res.scalar() or 0
+
+    # Fetch latest fee record for live payment status
+    fee_res = await db.execute(
+        select(FeeRecord)
+        .where(FeeRecord.gym_id == gym_id, FeeRecord.member_id == member.id)
+        .order_by(FeeRecord.due_date.desc())
+        .limit(1)
+    )
+    latest_fee = fee_res.scalar_one_or_none()
+    fee_status = latest_fee.payment_status if latest_fee else "paid"
+    fee_due_date = latest_fee.due_date if latest_fee else None
+    fee_amount_due = float(latest_fee.amount_due) if latest_fee else float(member.monthly_fee)
+
+    return MemberPassInfoResponse(
+        member_id=member.id,
+        member_name=member.full_name,
+        phone=member.phone,
+        monthly_fee=member.monthly_fee,
+        billing_cycle_day=member.billing_cycle_day,
+        status=member.status,
+        gym_id=gym.id,
+        gym_name=gym.name,
+        gym_logo=gym.logo_url,
+        gym_primary_color=gym.primary_color,
+        gym_qr_token=gym.qr_secret_token,
+        checked_in_today=last_rec is not None,
+        last_check_in_time=last_rec.check_in_time if last_rec else None,
+        total_check_ins=total_count,
+        fee_status=fee_status,
+        fee_due_date=fee_due_date,
+        fee_amount_due=fee_amount_due,
+    )
+
+
+@router.get("/public-pass-info/{member_id}", response_model=MemberPassInfoResponse)
+async def get_public_member_pass_info(
+    member_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Public pass verification endpoint for athlete mobile scanner.
+    Loads member and gym, generates an access session token for check-in.
+    """
+    member_res = await db.execute(select(Member).where(Member.id == member_id))
+    member = member_res.scalar_one_or_none()
+    if not member:
+        raise HTTPException(status_code=404, detail="Athlete pass not found or link has expired.")
+
+    gym_res = await db.execute(select(Gym).where(Gym.id == member.gym_id))
+    gym = gym_res.scalar_one_or_none()
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gym record not found.")
+
+    # 365-day access token for member check-in session
+    pass_token = create_access_token(
+        subject=member.id,
+        gym_id=gym.id,
+        role="member",
+        expires_delta=timedelta(days=365)
+    )
+
+    # Check today's attendance
+    start_of_today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_rec_res = await db.execute(
+        select(AttendanceRecord)
+        .where(
+            AttendanceRecord.gym_id == gym.id,
+            AttendanceRecord.member_id == member.id,
+            AttendanceRecord.check_in_time >= start_of_today,
+        )
+        .order_by(AttendanceRecord.check_in_time.desc())
+        .limit(1)
+    )
+    last_rec = today_rec_res.scalar_one_or_none()
+
+    total_res = await db.execute(
+        select(func.count(AttendanceRecord.id)).where(
+            AttendanceRecord.gym_id == gym.id,
+            AttendanceRecord.member_id == member.id,
+        )
+    )
+    total_count = total_res.scalar() or 0
+
+    # Fetch latest fee record for live payment status
+    fee_res = await db.execute(
+        select(FeeRecord)
+        .where(FeeRecord.gym_id == gym.id, FeeRecord.member_id == member.id)
+        .order_by(FeeRecord.due_date.desc())
+        .limit(1)
+    )
+    latest_fee = fee_res.scalar_one_or_none()
+    fee_status = latest_fee.payment_status if latest_fee else "paid"
+    fee_due_date = latest_fee.due_date if latest_fee else None
+    fee_amount_due = float(latest_fee.amount_due) if latest_fee else float(member.monthly_fee)
+
+    return MemberPassInfoResponse(
+        member_id=member.id,
+        member_name=member.full_name,
+        phone=member.phone,
+        monthly_fee=member.monthly_fee,
+        billing_cycle_day=member.billing_cycle_day,
+        status=member.status,
+        gym_id=gym.id,
+        gym_name=gym.name,
+        gym_logo=gym.logo_url,
+        gym_primary_color=gym.primary_color,
+        gym_qr_token=gym.qr_secret_token,
+        checked_in_today=last_rec is not None,
+        last_check_in_time=last_rec.check_in_time if last_rec else None,
+        total_check_ins=total_count,
+        pass_token=pass_token,
+        fee_status=fee_status,
+        fee_due_date=fee_due_date,
+        fee_amount_due=fee_amount_due,
+    )
+
+
 

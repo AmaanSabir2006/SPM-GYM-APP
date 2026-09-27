@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import List, Optional
 from pydantic import BaseModel
 
@@ -31,3 +31,27 @@ class MemberAttendanceHistory(BaseModel):
     member_name: str
     total_check_ins: int
     history: List[AttendanceResponse]
+
+
+class MemberPassInfoResponse(BaseModel):
+    member_id: str
+    member_name: str
+    phone: str
+    monthly_fee: float
+    billing_cycle_day: int
+    status: str
+    gym_id: str
+    gym_name: str
+    gym_logo: Optional[str] = None
+    gym_primary_color: Optional[str] = None
+    gym_qr_token: Optional[str] = None
+    checked_in_today: bool = False
+    last_check_in_time: Optional[datetime] = None
+    total_check_ins: int = 0
+    pass_token: Optional[str] = None
+    fee_status: str = "paid"  # 'paid', 'unpaid', 'overdue'
+    fee_due_date: Optional[date] = None
+    fee_amount_due: Optional[float] = None
+
+
+
