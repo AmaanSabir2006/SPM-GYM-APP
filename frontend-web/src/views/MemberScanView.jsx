@@ -491,17 +491,12 @@ export const MemberScanView = () => {
 
       {/* Athlete Membership Pass Card */}
       <div
+        className="athlete-vip-pass"
         style={{
           width: "100%",
           maxWidth: "460px",
-          background: "linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          borderRadius: "18px",
-          padding: "16px 18px",
-          marginBottom: "18px",
-          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5)",
-          position: "relative",
-          overflow: "hidden",
+          padding: "20px 22px",
+          marginBottom: "20px",
         }}
       >
         <div style={{ position: "absolute", top: "-15px", right: "-15px", width: "90px", height: "90px", background: "radial-gradient(circle, rgba(230, 57, 70, 0.25) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
@@ -656,15 +651,13 @@ export const MemberScanView = () => {
 
         {/* Camera Viewport */}
         <div
+          className={`scanner-reticle-frame ${scanning ? "active" : ""}`}
           style={{
             width: "100%",
             maxWidth: "320px",
             height: "320px",
             position: "relative",
-            borderRadius: "18px",
-            overflow: "hidden",
             background: "#000",
-            border: scanning ? "2px solid #E63946" : "2px dashed rgba(255, 255, 255, 0.2)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

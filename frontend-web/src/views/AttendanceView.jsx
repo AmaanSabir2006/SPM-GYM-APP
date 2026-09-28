@@ -70,50 +70,71 @@ export const AttendanceView = () => {
         </button>
       </div>
 
-      {/* KPI Stats */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-header">
-            <span className="stat-label">Checked In Today</span>
-            <div className="stat-icon" style={{ background: "rgba(16, 185, 129, 0.15)", color: "#10B981" }}>
-              <Clock size={20} />
+      {/* KPI Stats Matching Dashboard Executive Style */}
+      <div className="stat-boxes-grid attendance-stat-grid">
+        {/* Card 1: Checked In Today (Emerald Green Style) */}
+        <div className="stat-box stat-box-green">
+          <div className="stat-box-top">
+            <div className="stat-box-title-group">
+              <span className="stat-box-label">CHECKED IN TODAY</span>
+              <span className="stat-box-sub">Daily Live Attendance</span>
+            </div>
+            <div className="stat-box-icon-circle">
+              <Clock size={16} />
             </div>
           </div>
-          <div className="stat-value" style={{ color: "#10B981" }}>
+          <div className="stat-box-value">
             {stats?.total_today || todayList.length || 0}
           </div>
-          <div className="stat-footer">
-            <span>Real-time front desk entrance count</span>
+          <div className="stat-box-footer">
+            <span className="kpi-trend-pill-success">
+              Live Today
+            </span>
+            <span className="stat-box-action">• Front desk entrance</span>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-header">
-            <span className="stat-label">Weekly Check-in Volume</span>
-            <div className="stat-icon" style={{ background: "rgba(59, 130, 246, 0.15)", color: "#3B82F6" }}>
-              <TrendingUp size={20} />
+        {/* Card 2: Weekly Check-in Volume (Royal Blue Style) */}
+        <div className="stat-box stat-box-blue">
+          <div className="stat-box-top">
+            <div className="stat-box-title-group">
+              <span className="stat-box-label">WEEKLY CHECK-IN VOLUME</span>
+              <span className="stat-box-sub">Past 7 Days</span>
+            </div>
+            <div className="stat-box-icon-circle">
+              <TrendingUp size={16} />
             </div>
           </div>
-          <div className="stat-value" style={{ color: "#3B82F6" }}>
+          <div className="stat-box-value">
             {stats?.weekly_count || 0}
           </div>
-          <div className="stat-footer">
-            <span>Total scans in past 7 days</span>
+          <div className="stat-box-footer">
+            <span className="kpi-trend-pill-blue">
+              7-Day Activity
+            </span>
+            <span className="stat-box-action">• Total entrance scans</span>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-header">
-            <span className="stat-label">Active Athletes This Week</span>
-            <div className="stat-icon" style={{ background: "rgba(225, 29, 72, 0.15)", color: "var(--primary)" }}>
-              <Users size={20} />
+        {/* Card 3: Active Athletes This Week (Warm Amber Style) */}
+        <div className="stat-box stat-box-amber">
+          <div className="stat-box-top">
+            <div className="stat-box-title-group">
+              <span className="stat-box-label">ACTIVE ATHLETES</span>
+              <span className="stat-box-sub">Floor Headcount</span>
+            </div>
+            <div className="stat-box-icon-circle">
+              <Users size={16} />
             </div>
           </div>
-          <div className="stat-value" style={{ color: "var(--primary)" }}>
+          <div className="stat-box-value">
             {stats?.unique_members_this_week || 0}
           </div>
-          <div className="stat-footer">
-            <span>Unique members active on gym floor</span>
+          <div className="stat-box-footer">
+            <span className="kpi-trend-pill-warning">
+              Unique Members
+            </span>
+            <span className="stat-box-action">• Active floor presence</span>
           </div>
         </div>
       </div>
@@ -125,12 +146,11 @@ export const AttendanceView = () => {
             <CalendarCheck size={18} color="#10B981" />
             Today's Check-in Log ({filteredAttendance.length})
           </h3>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", maxWidth: "260px", width: "100%" }}>
-            <Search size={15} color="var(--text-dim)" />
+          <div className="search-input-wrapper" style={{ maxWidth: "260px" }}>
+            <Search size={15} className="search-icon" />
             <input
               type="text"
               className="form-input"
-              style={{ padding: "6px 12px", fontSize: "12.5px" }}
               placeholder="Search athlete..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

@@ -20,7 +20,7 @@ import { useAuth } from "../context/AuthContext";
 export const Navbar = ({ activeTab, setActiveTab, alertsData, onRefreshAlerts }) => {
   const { user, gym, logout } = useAuth();
   const [showBellDropdown, setShowBellDropdown] = useState(false);
-  const [theme, setTheme] = useState(() => localStorage.getItem("gymtrack_theme") || "light");
+  const [theme, setTheme] = useState(() => localStorage.getItem("gymtrack_theme") || "dark");
   const dropdownRef = useRef(null);
 
   // Apply theme to html root on mount and change

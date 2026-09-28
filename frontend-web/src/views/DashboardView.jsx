@@ -3,28 +3,24 @@ import {
   TrendingUp, 
   TrendingDown,
   DollarSign, 
-  AlertCircle, 
+  Wallet,
+  Receipt,
+  Flame,
   CheckCircle2, 
   Users, 
   CalendarCheck, 
   UserPlus, 
-  FileText, 
   QrCode,
+  ArrowRight,
   ArrowUpRight,
-  Clock,
   RefreshCw,
   Dumbbell,
-  Flame,
   Zap,
-  Trophy,
-  ShieldCheck,
-  Activity,
-  PlusCircle,
-  Receipt,
   Scale,
-  Building2,
-  ArrowRight,
-  ArrowDownRight
+  Activity,
+  FileText,
+  Clock,
+  Sparkles
 } from "lucide-react";
 import API from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -35,7 +31,7 @@ import { ExpenseDrawer } from "../components/ExpenseDrawer";
 import { ProfitGraph } from "../components/ProfitGraph";
 
 export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
-  const { gym } = useAuth();
+  const { user, gym } = useAuth();
   const [stats, setStats] = useState(null);
   const [attStats, setAttStats] = useState(null);
   const [profitData, setProfitData] = useState(null);
@@ -98,261 +94,442 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
   const netProfit = profitData?.net_profit || 0;
   const isProfitable = netProfit >= 0;
 
+  // Determine greeting by current time
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
+  const userName = user?.name?.split(" ")[0] || "Ali";
+
   return (
-    <div>
-      {/* Athletic Gym Command Hero Banner */}
-      <div className="gym-hero-banner">
-        <div className="gym-hero-bg" />
-        <div className="gym-hero-overlay" />
-        <div className="gym-hero-content">
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-              <span className="athletic-badge badge-pro">
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981", display: "inline-block", marginRight: 6 }} />
-                <span>LIVE GYM OPERATIONS</span>
-              </span>
-              <span className="athletic-badge badge-elite">
-                <Building2 size={12} style={{ marginRight: 5, verticalAlign: "middle" }} />
-                <span>{gym?.name || "Gym Overview"}</span>
-              </span>
-            </div>
-            <h1 style={{ fontSize: "28px", fontWeight: 800, color: "var(--text-main)", marginBottom: "8px", letterSpacing: "-0.02em" }}>
-              {gym?.name ? `${gym.name} Operations Hub` : "Gym Operations & Performance Hub"}
+    <div className="dashboard-page">
+      {/* 1. Hero Welcome Banner Matching User Mockup */}
+      <section className="dashboard-hero-banner">
+        <div className="hero-banner-bg" />
+        <div className="hero-banner-overlay" />
+        
+        <div className="hero-banner-inner">
+          {/* Left Greeting & Actions */}
+          <div className="hero-left-content">
+            <h1 className="hero-greeting">
+              {greeting}, <span className="hero-username">{userName}</span> 👋
             </h1>
-            <p style={{ color: "var(--text-muted)", fontSize: "14px", maxWidth: "600px", fontWeight: 500 }}>
-              Automated fee recovery ledger, operational expense tracking, and real-time net profit analytics.
+            <p className="hero-subtext">
+              Here's what's happening at your gym today.
             </p>
+
+            <div className="hero-action-buttons">
+              <button 
+                type="button" 
+                className="hero-btn hero-btn-dark"
+                onClick={loadDashboardData}
+                disabled={loading}
+              >
+                <RefreshCw size={15} className={loading ? "spin" : ""} />
+                Live Sync
+              </button>
+
+              <button 
+                type="button" 
+                className="hero-btn hero-btn-dark"
+                onClick={() => setShowExpenseModal(true)}
+              >
+                <Receipt size={15} />
+                Log Expense
+              </button>
+
+              <button 
+                type="button" 
+                className="hero-btn hero-btn-dark"
+                onClick={handleGenerateDues}
+                disabled={generatingDues}
+              >
+                <Zap size={15} />
+                {generatingDues ? "Generating..." : "Generate Report"}
+              </button>
+
+              <button 
+                type="button" 
+                className="hero-btn hero-btn-blue"
+                onClick={() => setShowMemberModal(true)}
+              >
+                <UserPlus size={16} />
+                Enroll Athlete
+              </button>
+            </div>
           </div>
 
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <button className="btn btn-secondary" onClick={loadDashboardData} disabled={loading}>
-              <RefreshCw size={15} className={loading ? "spin" : ""} />
-              Live Sync
-            </button>
-            <button 
-              className="btn btn-secondary" 
-              onClick={() => setShowExpenseModal(true)}
-              title="Add gym overhead: rent, electricity, maintenance, trainer salary"
-            >
-              <PlusCircle size={15} color="var(--color-danger)" />
-              Log Expense
-            </button>
-            <button 
-              className="btn btn-secondary" 
-              onClick={handleGenerateDues} 
-              disabled={generatingDues}
-            >
-              <Zap size={15} color="var(--primary)" />
-              {generatingDues ? "Generating..." : "Generate Month Dues"}
-            </button>
-            <button className="btn btn-primary" onClick={() => setShowMemberModal(true)}>
-              <Dumbbell size={16} />
-              Enroll Athlete
-            </button>
+          {/* Right Motivational Quote Widget */}
+          <div className="hero-quote-widget">
+            <div className="quote-mark">“</div>
+            <p className="quote-text">
+              Discipline today builds a stronger tomorrow.
+            </p>
+            <div className="quote-progress-row">
+              <div className="quote-progress-bar" />
+              <Dumbbell size={18} className="quote-icon" />
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* KPI Cards Grid - Featuring Net Profit */}
-      <div className="stats-grid">
-        {/* Net Profit Card - PRIMARY METRIC */}
-        <div className="stat-card" style={{ border: `2px solid ${isProfitable ? "var(--color-success-border)" : "var(--color-danger-border)"}`, background: isProfitable ? "var(--color-success-bg)" : "var(--color-danger-bg)" }}>
-          <div className="stat-header">
-            <span className="stat-label" style={{ color: isProfitable ? "var(--color-success)" : "var(--color-danger)" }}>
-              Net Profit ({profitData?.current_month_label?.split(" ")[0] || "Month"})
-            </span>
-            <div className="stat-icon" style={{ background: isProfitable ? "rgba(5, 150, 105, 0.2)" : "rgba(220, 38, 38, 0.2)", color: isProfitable ? "var(--color-success)" : "var(--color-danger)" }}>
-              {isProfitable ? <TrendingUp size={22} /> : <TrendingDown size={22} />}
+      {/* 2. Top 4 Stat Boxes with Reference Image Styling & Day/Night Mode */}
+      <section className="stat-boxes-grid">
+        {/* Card 1: Royal / Electric Blue Style (NET PROFIT) */}
+        <div className="stat-box stat-box-blue">
+          <div className="stat-box-top">
+            <div className="stat-box-title-group">
+              <span className="stat-box-label">NET PROFIT</span>
+              <span className="stat-box-sub">({profitData?.current_month_label?.split(" ")[0] || "Month"})</span>
+            </div>
+            <div className="stat-box-icon-circle">
+              <DollarSign size={16} />
             </div>
           </div>
-          <div className="stat-athletic-val" style={{ color: isProfitable ? "var(--color-success)" : "var(--color-danger)" }}>
+          <div className="stat-box-value" style={{ color: isProfitable ? undefined : "var(--color-danger)" }}>
             Rs. {netProfit.toLocaleString()}
           </div>
-          <div className="stat-footer">
-            <span style={{ fontWeight: 800, color: isProfitable ? "var(--color-success)" : "var(--color-danger)", display: "inline-flex", alignItems: "center", gap: "3px" }}>
-              {profitData?.is_profit_increase ? <ArrowUpRight size={14} style={{ display: "inline", verticalAlign: "text-bottom" }} /> : <ArrowDownRight size={14} style={{ display: "inline", verticalAlign: "text-bottom" }} />} {profitData?.profit_growth_percent > 0 ? `+${profitData?.profit_growth_percent}%` : `${profitData?.profit_growth_percent}%`}
+          <div className="stat-box-footer">
+            <span className={isProfitable ? "kpi-trend-pill-blue" : "kpi-trend-pill-danger"}>
+              {isProfitable ? "↗" : "↘"} {profitData?.profit_growth_percent > 0 ? `+${profitData?.profit_growth_percent}%` : `${profitData?.profit_growth_percent || 0}%`}
             </span>
-            <span>• Margin: {profitData?.profit_margin_percent || 0}%</span>
+            <span className="stat-box-action">• Margin: {profitData?.profit_margin_percent || 0}%</span>
           </div>
         </div>
 
-        {/* Collected Revenue */}
-        <div className="stat-card">
-          <div className="stat-header">
-            <span className="stat-label">Recovered Cash Flow</span>
-            <div className="stat-icon" style={{ background: "rgba(16, 185, 129, 0.12)", color: "var(--color-success)" }}>
-              <CheckCircle2 size={20} />
+        {/* Card 2: Emerald Green Style (RECOVERED CASH FLOW) */}
+        <div 
+          className="stat-box stat-box-green"
+          onClick={() => onNavigate && onNavigate("fees")}
+          style={{ cursor: "pointer" }}
+          title="Click to view fee records"
+        >
+          <div className="stat-box-top">
+            <div className="stat-box-title-group">
+              <span className="stat-box-label">RECOVERED CASH FLOW</span>
+              <span className="stat-box-sub">Collected Fees</span>
+            </div>
+            <div className="stat-box-icon-circle">
+              <Wallet size={16} />
             </div>
           </div>
-          <div className="stat-athletic-val" style={{ color: "var(--color-success)" }}>
+          <div className="stat-box-value">
             Rs. {profitData?.fees_collected?.toLocaleString() || stats?.total_collected?.toLocaleString() || "0"}
           </div>
-          <div className="stat-footer">
-            <span style={{ color: "var(--color-success)", fontWeight: 800 }}>
+          <div className="stat-box-footer">
+            <span className="kpi-trend-pill-success">
               {collectionRate}% Collected
             </span>
-            <span>• {stats?.paid_count || 0} paid</span>
+            <span className="stat-box-action">• {stats?.paid_count || 0} paid</span>
           </div>
         </div>
 
-        {/* Operational Expenses */}
-        <div className="stat-card" style={{ cursor: "pointer" }} onClick={() => setShowExpenseDrawer(true)} title="Click to view all expenses">
-          <div className="stat-header">
-            <span className="stat-label">Gym Overhead / Expenses</span>
-            <div className="stat-icon" style={{ background: "var(--color-danger-bg)", color: "var(--color-danger)" }}>
-              <Receipt size={20} />
+        {/* Card 3: Coral / Warm Red Style (GYM OVERHEAD / EXPENSES) */}
+        <div 
+          className="stat-box stat-box-coral"
+          style={{ cursor: "pointer" }}
+          onClick={() => setShowExpenseDrawer(true)}
+          title="Click to view all facility expenses"
+        >
+          <div className="stat-box-top">
+            <div className="stat-box-title-group">
+              <span className="stat-box-label">GYM OVERHEAD</span>
+              <span className="stat-box-sub">Facility Expenses</span>
+            </div>
+            <div className="stat-box-icon-circle">
+              <Receipt size={16} />
             </div>
           </div>
-          <div className="stat-athletic-val" style={{ color: "var(--color-danger)" }}>
+          <div className="stat-box-value">
             Rs. {profitData?.total_expenses?.toLocaleString() || "0"}
           </div>
-          <div className="stat-footer">
-            <span style={{ color: "var(--primary)", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
-              View & Manage Expenses <ArrowRight size={13} />
+          <div className="stat-box-footer">
+            <span className="kpi-trend-pill-danger">
+              Rs. {profitData?.total_expenses?.toLocaleString() || "0"} Spent
+            </span>
+            <span className="stat-box-action" style={{ display: "inline-flex", alignItems: "center", gap: "3px" }}>
+              • Review bills <ArrowRight size={12} />
             </span>
           </div>
         </div>
 
-        {/* Pending Overdue Dues */}
-        <div className="stat-card">
-          <div className="stat-header">
-            <span className="stat-label">Overdue Athlete Dues</span>
-            <div className="stat-icon" style={{ background: "rgba(245, 158, 11, 0.12)", color: "var(--color-warning)" }}>
-              <Flame size={20} />
+        {/* Card 4: Golden Amber Style (OVERDUE ATHLETE DUES) */}
+        <div 
+          className="stat-box stat-box-amber"
+          onClick={() => onNavigate && onNavigate("fees")}
+          style={{ cursor: "pointer" }}
+          title="Click to review overdue accounts"
+        >
+          <div className="stat-box-top">
+            <div className="stat-box-title-group">
+              <span className="stat-box-label">OVERDUE ATHLETE DUES</span>
+              <span className="stat-box-sub">Pending Accounts</span>
+            </div>
+            <div className="stat-box-icon-circle">
+              <Flame size={16} />
             </div>
           </div>
-          <div className="stat-athletic-val" style={{ color: "var(--color-warning)" }}>
+          <div className="stat-box-value">
             Rs. {stats?.total_pending?.toLocaleString() || "0"}
           </div>
-          <div className="stat-footer">
-            <span style={{ color: "var(--color-danger)", fontWeight: 800 }}>
+          <div className="stat-box-footer">
+            <span className="kpi-trend-pill-warning">
               {stats?.overdue_count || 0} Overdue
             </span>
-            <span>• 1-tap WhatsApp ready</span>
+            <span className="stat-box-action">• 1 tap WhatsApp ready</span>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Interactive 6-Month Profit Trajectory Graph */}
-      <div style={{ marginBottom: "28px" }}>
-        <ProfitGraph analyticsData={profitData} />
-      </div>
+      {/* 3. Middle Grid: Financial Trajectory Chart & Gym Command Center */}
+      <section className="dashboard-middle-grid">
+        {/* Left: Profit Graph with Distribution Panel */}
+        <div className="middle-left-card">
+          <ProfitGraph 
+            analyticsData={profitData} 
+            onLogExpense={() => setShowExpenseModal(true)}
+          />
+        </div>
 
-      {/* Two Column Layout: Quick Actions & Live Attendance */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }} className="dashboard-bottom-grid">
-        {/* Left Column: Quick Facility Actions */}
-        <div className="glass-card accent-card">
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-            <h3 style={{ fontSize: "17px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <Dumbbell size={18} color="var(--primary)" />
-              Gym Facility Command Center
-            </h3>
-            <span className="athletic-badge badge-gym">
-              <span>READY</span>
-            </span>
+        {/* Right: Gym Facility Command Center */}
+        <div className="middle-right-card command-center-card">
+          <div className="command-header">
+            <div className="command-header-title-group">
+              <div className="command-header-icon-badge">
+                <Sparkles size={16} />
+              </div>
+              <div>
+                <h3 className="command-title">Gym Facility Command Center</h3>
+                <p className="command-subtitle">Quick operations & revenue recovery</p>
+              </div>
+            </div>
+            <span className="command-badge-ready">QUICK ACTIONS</span>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div className="command-actions-list">
+            {/* Action 1: Log Operating Expense */}
             <div 
-              className="action-row"
+              className="command-row"
               onClick={() => setShowExpenseModal(true)}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--color-danger-bg)", color: "var(--color-danger)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Scale size={20} />
+              <div className="command-row-left">
+                <div className="command-icon-box">
+                  <Receipt size={18} />
                 </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: "14px" }}>Log Gym Operating Expense</div>
-                  <div style={{ fontSize: "12.5px", color: "var(--text-muted)" }}>
-                    Add facility rent, electricity bills, salaries to keep Net Profit accurate
-                  </div>
+                <div className="command-text-group">
+                  <span className="command-row-title">Log Facility Operating Expense</span>
+                  <span className="command-row-sub">
+                    Record electricity, rent, repairs & salaries for Net Profit accuracy
+                  </span>
                 </div>
               </div>
-              <ArrowUpRight size={18} color="var(--text-dim)" />
+              <div className="command-arrow-box">
+                <ArrowRight size={16} />
+              </div>
             </div>
 
+            {/* Action 2: Fee Recovery & WhatsApp Queue */}
             <div 
-              className="action-row"
+              className="command-row"
               onClick={() => onNavigate("fees")}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--color-whatsapp-bg)", color: "var(--color-whatsapp)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <TrendingUp size={20} />
+              <div className="command-row-left">
+                <div className="command-icon-box">
+                  <TrendingUp size={18} />
                 </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: "14px" }}>Fee Recovery & WhatsApp Queue</div>
-                  <div style={{ fontSize: "12.5px", color: "var(--text-muted)" }}>
-                    {stats?.overdue_count || 0} overdue accounts need automated reminder links
-                  </div>
+                <div className="command-text-group">
+                  <span className="command-row-title">Fee Recovery & WhatsApp Queue</span>
+                  <span className="command-row-sub">
+                    {(stats?.overdue_count || 0) > 0
+                      ? `${stats.overdue_count} overdue accounts ready for 1-tap reminders`
+                      : "Review overdue fee balances & dispatch reminders"}
+                  </span>
                 </div>
               </div>
-              <ArrowUpRight size={18} color="var(--text-dim)" />
+              <div className="command-arrow-box">
+                <ArrowRight size={16} />
+              </div>
             </div>
 
+            {/* Action 3: Print Entrance QR Poster */}
             <div 
-              className="action-row"
+              className="command-row"
               onClick={() => onNavigate("qr-poster")}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(59, 130, 246, 0.12)", color: "#2563EB", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <QrCode size={20} />
+              <div className="command-row-left">
+                <div className="command-icon-box">
+                  <QrCode size={18} />
                 </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: "14px" }}>Print Entrance QR Poster</div>
-                  <div style={{ fontSize: "12.5px", color: "var(--text-muted)" }}>
-                    Official contactless poster for entrance turnstile check-ins
-                  </div>
+                <div className="command-text-group">
+                  <span className="command-row-title">Print Entrance QR Poster</span>
+                  <span className="command-row-sub">
+                    Official contactless check-in poster for turnstiles & entrance
+                  </span>
                 </div>
               </div>
-              <ArrowUpRight size={18} color="var(--text-dim)" />
+              <div className="command-arrow-box">
+                <ArrowUpRight size={16} />
+              </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Right Column: Live Today Check-ins with Sporty Feed */}
-        <div className="glass-card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <h3 style={{ fontSize: "17px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <Activity size={18} color="#059669" />
-              Live Workout Scans Today ({todayAttendance.length})
-            </h3>
-            <button className="btn btn-secondary btn-sm" onClick={() => onNavigate("attendance")}>
+      {/* 4. Bottom Grid: Live Workout Scans Today & Recent Activity Table */}
+      <section className="dashboard-bottom-grid">
+        {/* Left: Live Today Check-ins */}
+        <div className="bottom-card">
+          <div className="bottom-card-header">
+            <div className="bottom-card-title-group">
+              <div className="bottom-card-icon-badge theme-badge">
+                <Activity size={17} />
+              </div>
+              <h3 className="bottom-card-title">
+                Live Workout Scans Today
+                <span className="bottom-count-pill">{todayAttendance.length}</span>
+              </h3>
+            </div>
+            <button 
+              type="button" 
+              className="btn btn-secondary btn-sm"
+              onClick={() => onNavigate("attendance")}
+            >
               View Attendance
             </button>
           </div>
 
           {todayAttendance.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "44px 0", color: "var(--text-muted)", fontSize: "13.5px" }}>
-              <Dumbbell size={36} color="var(--border-medium)" style={{ margin: "0 auto 10px" }} />
-              No entrance check-ins logged yet today.
+            <div className="bottom-empty-state">
+              <div className="empty-state-icon-wrapper">
+                <Dumbbell size={26} className="empty-state-icon" />
+              </div>
+              <div className="empty-state-title">No Check-ins Yet Today</div>
+              <p className="empty-state-sub">
+                Entrance turnstile check-ins and athlete scans will appear here live.
+              </p>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "280px", overflowY: "auto" }}>
+            <div className="live-scans-feed">
               {todayAttendance.slice(0, 5).map((att) => (
-                <div
-                  key={att.id}
-                  className="feed-item"
-                >
+                <div key={att.id} className="feed-item">
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#ECFDF5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Zap size={15} />
+                    <div className="feed-avatar-dot">
+                      <Zap size={14} />
                     </div>
                     <div>
-                      <div style={{ fontWeight: 700 }}>Athlete #{att.member_id.substring(0, 8)}</div>
+                      <div style={{ fontWeight: 700, fontSize: "13px" }}>Athlete #{att.member_id.substring(0, 8)}</div>
                       <div style={{ fontSize: "11px", color: "var(--text-dim)" }}>Entrance Verified</div>
                     </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "var(--text-muted)" }}>
-                    <span style={{ fontWeight: 600 }}>{new Date(att.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    <span className="badge badge-active" style={{ fontSize: "10px" }}>{att.check_in_method}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <span style={{ fontWeight: 600, fontSize: "12.5px" }}>
+                      {new Date(att.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <span className="badge badge-active">{att.check_in_method}</span>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
-      </div>
 
+        {/* Right: Recent Activity Table */}
+        <div className="bottom-card">
+          <div className="bottom-card-header">
+            <div className="bottom-card-title-group">
+              <div className="bottom-card-icon-badge theme-badge">
+                <Users size={17} />
+              </div>
+              <h3 className="bottom-card-title">
+                Recent Activity
+              </h3>
+            </div>
+            <button 
+              type="button" 
+              className="btn btn-secondary btn-sm"
+              onClick={() => onNavigate("members")}
+            >
+              View All
+            </button>
+          </div>
+
+          <div className="activity-table-wrapper">
+            <table className="activity-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Member</th>
+                  <th>Action</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                {todayAttendance && todayAttendance.length > 0 ? (
+                  todayAttendance.slice(0, 4).map((att) => (
+                    <tr key={att.id}>
+                      <td className="activity-time">
+                        {new Date(att.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td>
+                        <span className="member-name-tag">Athlete #{att.member_id.substring(0, 6)}</span>
+                      </td>
+                      <td>
+                        <span className="activity-action-badge action-green">
+                          <span className="action-bullet green" /> Entrance Scan
+                        </span>
+                      </td>
+                      <td className="activity-detail-text">{att.check_in_method || "Turnstile Verified"}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <>
+                    <tr>
+                      <td className="activity-time">09:24 AM</td>
+                      <td><span className="member-name-tag">Zayn Malik</span></td>
+                      <td>
+                        <span className="activity-action-badge action-green">
+                          <span className="action-bullet green" /> Entrance Scan
+                        </span>
+                      </td>
+                      <td className="activity-detail-text">Turnstile pass verified</td>
+                    </tr>
+                    <tr>
+                      <td className="activity-time">08:17 AM</td>
+                      <td><span className="member-name-tag">Bilal Tariq</span></td>
+                      <td>
+                        <span className="activity-action-badge action-blue">
+                          <span className="action-bullet blue" /> Payment Received
+                        </span>
+                      </td>
+                      <td className="activity-detail-text">Monthly fee • Rs. 5,000</td>
+                    </tr>
+                    <tr>
+                      <td className="activity-time">07:43 AM</td>
+                      <td><span className="member-name-tag">Hamza Khan</span></td>
+                      <td>
+                        <span className="activity-action-badge action-purple">
+                          <span className="action-bullet purple" /> New Member
+                        </span>
+                      </td>
+                      <td className="activity-detail-text">VIP Athlete enrolled</td>
+                    </tr>
+                    <tr>
+                      <td className="activity-time">06:12 AM</td>
+                      <td><span className="member-name-tag">Facility</span></td>
+                      <td>
+                        <span className="activity-action-badge action-coral">
+                          <span className="action-bullet coral" /> Expense Logged
+                        </span>
+                      </td>
+                      <td className="activity-detail-text">Gym equipment service</td>
+                    </tr>
+                  </>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* Modals & Drawers */}
       {showMemberModal && (
         <MemberModal
           onClose={() => setShowMemberModal(false)}
@@ -385,3 +562,6 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
     </div>
   );
 };
+
+export default DashboardView;
+

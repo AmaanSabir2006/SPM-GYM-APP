@@ -14,19 +14,28 @@ export const AuthProvider = ({ children }) => {
 
   // Apply dynamic gym branding to root CSS variables
   const applyBrandingTheme = (brandColor) => {
-    if (!brandColor) return;
+    let color = brandColor;
+    if (!color || color === "#334155" || color.toLowerCase() === "#253452") {
+      color = "#2563EB";
+    }
+    try {
+      localStorage.setItem("gymtrack_brand_color", color);
+    } catch (e) {}
     const root = document.documentElement;
-    root.style.setProperty("--primary", brandColor);
-    root.style.setProperty("--primary-hover", brandColor);
-    root.style.setProperty("--primary-glow", `${brandColor}40`);
-    root.style.setProperty("--primary-light", `${brandColor}18`);
+    root.style.setProperty("--primary", color);
+    root.style.setProperty("--primary-hover", color);
+    root.style.setProperty("--primary-glow", `${color}40`);
+    root.style.setProperty("--primary-light", `${color}18`);
+    root.style.setProperty("--sidebar-active", color);
+    root.style.setProperty("--brand-color", color);
   };
 
   const fetchGymProfile = async () => {
     try {
       const res = await API.get("/gyms/me");
       setGym(res.data);
-      if (res.data.primary_color) {
+      const savedBrand = localStorage.getItem("gymtrack_brand_color");
+      if (!savedBrand && res.data.primary_color) {
         applyBrandingTheme(res.data.primary_color);
       }
     } catch (err) {
@@ -35,6 +44,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    // Immediate hydration from cache with fallback to Theme Blue
+    const savedBrand = localStorage.getItem("gymtrack_brand_color");
+    if (savedBrand && savedBrand !== "#334155") {
+      applyBrandingTheme(savedBrand);
+    } else {
+      applyBrandingTheme("#2563EB");
+    }
+
     const initAuth = async () => {
       if (token) {
         await fetchGymProfile();
@@ -106,6 +123,12 @@ export const AuthProvider = ({ children }) => {
     applyBrandingTheme("#E11D48");
   };
 
+  const updateBrandColor = (newColor) => {
+    if (!newColor) return;
+    applyBrandingTheme(newColor);
+    setGym((prev) => (prev ? { ...prev, primary_color: newColor } : prev));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -117,6 +140,7 @@ export const AuthProvider = ({ children }) => {
         registerGym,
         logout,
         refreshGym: fetchGymProfile,
+        updateBrandColor,
       }}
     >
       {children}

@@ -1,23 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { 
-  Users, 
-  UserPlus, 
   Search, 
-  Filter, 
-  Phone, 
   Edit3, 
-  Receipt, 
-  Calendar, 
-  MessageCircle,
-  Clock,
-  Eye,
-  RefreshCw,
-  Dumbbell,
-  Zap,
-  Flame,
-  Award,
-  Trash2
+  Eye, 
+  RefreshCw, 
+  Dumbbell, 
+  Trash2,
+  MessageCircle
 } from "lucide-react";
 import API from "../api/client";
 import { useToast } from "../context/ToastContext";
@@ -25,11 +15,17 @@ import { MemberModal } from "../components/MemberModal";
 import { MemberDrawer } from "../components/MemberDrawer";
 import { MemberWelcomeModal } from "../components/MemberWelcomeModal";
 
-export const MembersView = () => {
+export const MembersView = ({ externalSearchQuery = "", onClearSearch }) => {
   const { showToast } = useToast();
   const [members, setMembers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(externalSearchQuery || "");
   const [statusFilter, setStatusFilter] = useState("all");
+
+  useEffect(() => {
+    if (externalSearchQuery !== undefined) {
+      setSearchTerm(externalSearchQuery);
+    }
+  }, [externalSearchQuery]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
@@ -121,52 +117,24 @@ export const MembersView = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "18px",
-          background: "var(--bg-card)",
-          padding: "14px 18px",
-          borderRadius: "var(--radius-md)",
-          border: "1px solid var(--border-subtle)",
-          flexWrap: "wrap",
-          gap: "14px",
-          boxShadow: "var(--shadow-sm)",
-        }}
-      >
-        <div style={{ display: "flex", gap: "6px" }}>
+      <div className="filter-bar">
+        <div className="filter-tab-group">
           {["all", "active", "inactive", "suspended"].map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
-              style={{
-                padding: "6px 14px",
-                borderRadius: "var(--radius-sm)",
-                fontSize: "12.5px",
-                fontWeight: 700,
-                cursor: "pointer",
-                border: "none",
-                background: statusFilter === st ? "var(--primary)" : "var(--bg-surface)",
-                color: statusFilter === st ? "white" : "var(--text-muted)",
-                transition: "all 0.15s",
-                textTransform: "uppercase",
-                fontFamily: "var(--font-athletic)",
-                letterSpacing: "0.05em",
-              }}
+              className={`filter-tab-btn ${statusFilter === st ? "active" : ""}`}
             >
               {st}
             </button>
           ))}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", maxWidth: "300px", width: "100%" }}>
-          <Search size={16} color="var(--text-dim)" />
+        <div className="search-input-wrapper">
+          <Search size={16} className="search-icon" />
           <input
             type="text"
             className="form-input"
-            style={{ padding: "8px 12px", fontSize: "13px" }}
             placeholder="Search athlete or phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -210,21 +178,7 @@ export const MembersView = () => {
                   <tr key={m.id}>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        <div
-                          style={{
-                            width: "36px",
-                            height: "36px",
-                            borderRadius: "10px",
-                            background: "linear-gradient(135deg, var(--bg-surface) 0%, #E2E8F0 100%)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontWeight: 800,
-                            color: "var(--text-main)",
-                            fontSize: "14px",
-                            border: "1px solid var(--border-medium)",
-                          }}
-                        >
+                        <div className="athlete-avatar-box">
                           {m.full_name.charAt(0).toUpperCase()}
                         </div>
                         <div>

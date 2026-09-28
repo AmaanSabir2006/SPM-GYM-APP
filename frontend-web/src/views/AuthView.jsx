@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { 
   Dumbbell, 
-  Sparkles, 
   ShieldCheck, 
   Receipt, 
   QrCode, 
   ArrowRight, 
-  Building2, 
-  Lock, 
-  Mail, 
-  User, 
+  Sun, 
+  Moon,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Building2,
+  Sparkles,
   Phone,
-  Palette,
-  Sun,
-  Moon
+  User,
+  Globe,
+  Check,
+  CheckCircle2
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -23,8 +27,7 @@ export const AuthView = () => {
   const { login, registerGym } = useAuth();
   const { showToast } = useToast();
 
-  // Dark/Light Theme state for Auth View
-  const [theme, setTheme] = useState(() => localStorage.getItem("gymtrack_theme") || "light");
+  const [theme, setTheme] = useState(() => localStorage.getItem("gymtrack_theme") || "dark");
 
   const toggleTheme = () => {
     const nextTheme = theme === "light" ? "dark" : "light";
@@ -40,30 +43,35 @@ export const AuthView = () => {
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
-  // Register form state
+  // Register form state - default is Crimson Red (#E11D48) as requested
   const [regGymName, setRegGymName] = useState("");
   const [regGymSlug, setRegGymSlug] = useState("");
-  const [regPrimaryColor, setRegPrimaryColor] = useState("#E11D48");
+  const [regPrimaryColor, setRegPrimaryColor] = useState(() => {
+    const saved = localStorage.getItem("gymtrack_preview_color");
+    if (saved && saved !== "#2563EB") return saved;
+    return "#E11D48";
+  });
   const [regOwnerName, setRegOwnerName] = useState("");
   const [regOwnerEmail, setRegOwnerEmail] = useState("");
   const [regOwnerPassword, setRegOwnerPassword] = useState("");
+  const [showRegPassword, setShowRegPassword] = useState(false);
   const [regOwnerPhone, setRegOwnerPhone] = useState("");
 
   const [loading, setLoading] = useState(false);
 
-  // Live preview brand color for cursor ambient glow and buttons during onboarding
+  // Live brand color synchronization: seamlessly applied whether in login or onboarding
+  // When user goes to onboarding and selects a new color, it stays selected when returning to login!
   useEffect(() => {
-    if (mode === "register" && regPrimaryColor) {
+    if (regPrimaryColor) {
       document.documentElement.style.setProperty("--primary", regPrimaryColor);
-      document.documentElement.style.setProperty("--primary-glow", `${regPrimaryColor}45`);
+      document.documentElement.style.setProperty("--primary-hover", regPrimaryColor);
+      document.documentElement.style.setProperty("--primary-glow", `${regPrimaryColor}40`);
       document.documentElement.style.setProperty("--primary-light", `${regPrimaryColor}18`);
-    } else {
-      document.documentElement.style.setProperty("--primary", "#E11D48");
-      document.documentElement.style.setProperty("--primary-glow", "rgba(225, 29, 72, 0.25)");
-      document.documentElement.style.setProperty("--primary-light", "rgba(225, 29, 72, 0.08)");
+      localStorage.setItem("gymtrack_preview_color", regPrimaryColor);
     }
-  }, [mode, regPrimaryColor]);
+  }, [regPrimaryColor]);
 
   // Auto-generate slug from gym name
   const handleGymNameChange = (e) => {
@@ -121,349 +129,468 @@ export const AuthView = () => {
     }
   };
 
+  // Red is the primary default choice
   const colorPresets = [
     { name: "Crimson Red", hex: "#E11D48" },
-    { name: "Cyber Cyan", hex: "#06B6D4" },
+    { name: "Royal Blue", hex: "#2563EB" },
     { name: "Emerald Green", hex: "#10B981" },
-    { name: "Vibrant Orange", hex: "#F97316" },
+    { name: "Cyber Cyan", hex: "#06B6D4" },
+    { name: "Sunset Orange", hex: "#F97316" },
     { name: "Royal Purple", hex: "#8B5CF6" },
   ];
 
   return (
-    <div className="auth-wrapper">
-      {/* Floating Theme Toggle */}
-      <button
-        type="button"
-        className="auth-theme-toggle"
-        onClick={toggleTheme}
-        title={`Switch to ${theme === "light" ? "Dark" : "Light"} Mode`}
-      >
-        {theme === "light" ? (
-          <>
-            <Moon size={15} />
-            <span>Dark Mode</span>
-          </>
-        ) : (
-          <>
-            <Sun size={15} color="#F59E0B" />
-            <span>Light Mode</span>
-          </>
-        )}
-      </button>
-
-      <div className="auth-container">
-        {/* Left Side: Brand Showcase */}
-        <div className="auth-brand-panel">
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "32px" }}>
-              <div
-                style={{
-                  width: "48px",
-                  height: "48px",
-                  borderRadius: "14px",
-                  background: "linear-gradient(135deg, var(--primary) 0%, #BE123C 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "white",
-                  boxShadow: "0 4px 16px var(--primary-glow)",
-                }}
-              >
-                <Dumbbell size={26} />
-              </div>
-              <div>
-                <h1 style={{ fontSize: "22px", fontWeight: 800, color: "var(--text-main)" }}>GymTrack</h1>
-                <div style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>
-                  Smart Gym Management Platform
-                </div>
-              </div>
-            </div>
-
-            <h2 style={{ fontSize: "28px", fontWeight: 800, lineHeight: 1.25, marginBottom: "16px", color: "var(--text-main)" }}>
-              Automate Fee Recovery & Entrance Check-ins.
-            </h2>
-            <p style={{ color: "var(--text-muted)", fontSize: "14px", lineHeight: 1.6, marginBottom: "32px" }}>
-              Built specifically for gym owners to eliminate paper registers, reduce overdue fees with 1-tap WhatsApp reminders, and modernize entrances with contactless QR self-scanning.
-            </p>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
-                <div style={{ width: 34, height: 34, borderRadius: 10, background: "var(--color-whatsapp-bg)", color: "var(--color-whatsapp)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <Receipt size={17} />
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: "14px", color: "var(--text-main)" }}>1-Tap Personalized WhatsApp Alerts</div>
-                  <div style={{ fontSize: "12.5px", color: "var(--text-muted)" }}>
-                    Instantly remind overdue members in Pakistan without expensive SMS APIs.
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
-                <div className="auth-badge-blue">
-                  <QrCode size={17} />
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: "14px", color: "var(--text-main)" }}>Contactless QR Entrance Scanner</div>
-                  <div style={{ fontSize: "12.5px", color: "var(--text-muted)" }}>
-                    Instant entrance check-in via printed QR code. Prevents double-scanning.
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
-                <div style={{ width: 34, height: 34, borderRadius: 10, background: "var(--primary-light)", color: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <ShieldCheck size={17} />
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: "14px", color: "var(--text-main)" }}>100% Private & Isolated Gym Data</div>
-                  <div style={{ fontSize: "12.5px", color: "var(--text-muted)" }}>
-                    Your member records, fees, and revenue data are strictly private to your gym.
-                  </div>
-                </div>
-              </div>
-            </div>
+    <div className="auth-page-wrapper">
+      {/* Top Header Navigation Bar */}
+      <header className="auth-top-nav">
+        <div className="auth-nav-brand">
+          <div className="auth-brand-logo-icon">
+            <Dumbbell size={22} />
           </div>
-
-          <div style={{ marginTop: "40px", fontSize: "12px", color: "var(--text-dim)" }}>
-            © 2026 GymTrack Technologies. All rights reserved.
+          <div className="auth-brand-name-group">
+            <span className="auth-brand-title">GymTrack</span>
+            <span className="auth-brand-badge">Enterprise Cloud</span>
           </div>
         </div>
 
-        {/* Right Side: Auth Form */}
-        <div className="auth-form-panel">
-          {/* Mode Tabs */}
-          <div
-            style={{
-              display: "flex",
-              background: "var(--bg-surface)",
-              padding: "4px",
-              borderRadius: "var(--radius-md)",
-              border: "1px solid var(--border-subtle)",
-              marginBottom: "24px",
-            }}
+        <div className="auth-nav-controls">
+          <div className="auth-status-pill">
+            <span className="auth-status-dot"></span>
+            <span>Cloud Network Operational</span>
+          </div>
+
+          <button
+            type="button"
+            className="auth-theme-btn"
+            onClick={toggleTheme}
+            title={`Switch to ${theme === "light" ? "Dark" : "Light"} Mode`}
           >
+            {theme === "light" ? (
+              <>
+                <Moon size={15} />
+                <span>Night Mode</span>
+              </>
+            ) : (
+              <>
+                <Sun size={15} color="#F59E0B" />
+                <span>Day Mode</span>
+              </>
+            )}
+          </button>
+        </div>
+      </header>
+
+      {/* Main Auth & Onboarding Container */}
+      <main className="auth-card-container">
+        {/* Left Side: Brand Showcase with /gym_hero.jpg Depth */}
+        <section className="auth-showcase-panel">
+          <div className="auth-showcase-bg"></div>
+          <div className="auth-showcase-overlay"></div>
+
+          <div className="auth-showcase-content">
+            <div>
+              <div className="auth-showcase-badge">
+                <Sparkles size={13} />
+                <span>The Operating System for Elite Gyms</span>
+              </div>
+
+              <h1 className="auth-showcase-title">
+                Automate Fee Recovery &amp; <span className="highlight">Entrance Check-ins.</span>
+              </h1>
+              <p className="auth-showcase-desc">
+                Engineered specifically for gym owners to eliminate paper registers, reduce overdue dues with 1-tap WhatsApp notifications, and modernize entrances with contactless QR self-scanning.
+              </p>
+
+              {/* Feature Highlights with Harmonized Theme Micro-Cards */}
+              <div className="auth-feature-list">
+                <div className="auth-feature-item">
+                  <div className="auth-feature-icon">
+                    <Receipt size={18} />
+                  </div>
+                  <div>
+                    <div className="auth-feature-title">1-Tap WhatsApp Dues Recovery</div>
+                    <div className="auth-feature-sub">
+                      Instantly notify overdue members directly on WhatsApp without expensive third-party SMS APIs.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="auth-feature-item">
+                  <div className="auth-feature-icon">
+                    <QrCode size={18} />
+                  </div>
+                  <div>
+                    <div className="auth-feature-title">Contactless QR Entrance Scanner</div>
+                    <div className="auth-feature-sub">
+                      Members scan a printed entrance poster for immediate attendance verification. Anti-double scan built-in.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="auth-feature-item">
+                  <div className="auth-feature-icon">
+                    <ShieldCheck size={18} />
+                  </div>
+                  <div>
+                    <div className="auth-feature-title">100% Private Isolated Tenant</div>
+                    <div className="auth-feature-sub">
+                      Your members, financial trajectories, and revenue data are strictly isolated with custom white-label branding.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Trust Metrics Bar */}
+            <div className="auth-trust-bar">
+              <div className="auth-trust-stat">
+                <span className="auth-trust-val">99.4%</span>
+                <span className="auth-trust-label">Fee Recovery Rate</span>
+              </div>
+              <div className="auth-trust-stat">
+                <span className="auth-trust-val">&lt; 180ms</span>
+                <span className="auth-trust-label">Entrance QR Scan</span>
+              </div>
+              <div className="auth-trust-stat">
+                <span className="auth-trust-val">Zero</span>
+                <span className="auth-trust-label">SMS Billing Costs</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Right Side: Auth Form Panel */}
+        <section className="auth-form-card">
+          <div className="auth-form-inner">
+            {/* Segmented Mode Switcher */}
+            <div className="auth-mode-switch">
             <button
               type="button"
+              className={`auth-mode-btn ${mode === "login" ? "active" : ""}`}
               onClick={() => setMode("login")}
-              style={{
-                flex: 1,
-                padding: "9px",
-                border: "none",
-                borderRadius: "var(--radius-sm)",
-                background: mode === "login" ? "var(--primary)" : "transparent",
-                color: mode === "login" ? "white" : "var(--text-muted)",
-                fontWeight: 600,
-                fontSize: "13.5px",
-                cursor: "pointer",
-                transition: "all 0.15s",
-              }}
             >
-              Sign In
+              <User size={15} />
+              <span>Sign In</span>
             </button>
             <button
               type="button"
+              className={`auth-mode-btn ${mode === "register" ? "active" : ""}`}
               onClick={() => setMode("register")}
-              style={{
-                flex: 1,
-                padding: "9px",
-                border: "none",
-                borderRadius: "var(--radius-sm)",
-                background: mode === "register" ? "var(--primary)" : "transparent",
-                color: mode === "register" ? "white" : "var(--text-muted)",
-                fontWeight: 600,
-                fontSize: "13.5px",
-                cursor: "pointer",
-                transition: "all 0.15s",
-              }}
             >
-              Onboard New Gym
+              <Building2 size={15} />
+              <span>Onboard Gym</span>
             </button>
           </div>
 
           {mode === "login" ? (
-            /* Login Form */
-            <form onSubmit={handleLoginSubmit}>
-              <div style={{ marginBottom: "20px" }}>
-                <h3 style={{ fontSize: "20px", marginBottom: "4px", color: "var(--text-main)" }}>Welcome Back</h3>
-                <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                  Enter your gym account credentials to access your dashboard.
+            /* ================= SIGN IN FORM ================= */
+            <form onSubmit={handleLoginSubmit} className="auth-form-body">
+              <div className="auth-form-header">
+                <h2 className="auth-form-title">Welcome Back</h2>
+                <p className="auth-form-subtitle">
+                  Enter your registered owner credentials to access your facility command center.
                 </p>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Email Address</label>
-                <input
-                  type="email"
-                  className="form-input"
-                  placeholder="owner@olympia.com"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  required
-                />
+              <div className="form-group" style={{ marginBottom: "18px" }}>
+                <label className="form-label" style={{ display: "block", marginBottom: "7px", fontSize: "12.5px", fontWeight: 700, color: "var(--text-main)" }}>
+                  Registered Email Address
+                </label>
+                <div className="auth-input-wrapper">
+                  <div className="auth-input-icon">
+                    <Mail size={16} />
+                  </div>
+                  <input
+                    type="email"
+                    className="auth-field-input"
+                    placeholder="owner@olympia.com"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                  />
+                </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Password</label>
-                <input
-                  type="password"
-                  className="form-input"
-                  placeholder="••••••••"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  required
-                />
+              <div className="form-group" style={{ marginBottom: "22px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "7px" }}>
+                  <label className="form-label" style={{ margin: 0, fontSize: "12.5px", fontWeight: 700, color: "var(--text-main)" }}>
+                    Account Password
+                  </label>
+                </div>
+                <div className="auth-input-wrapper">
+                  <div className="auth-input-icon">
+                    <Lock size={16} />
+                  </div>
+                  <input
+                    type={showLoginPassword ? "text" : "password"}
+                    className="auth-field-input"
+                    placeholder="••••••••"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    style={{ paddingRight: "40px" }}
+                  />
+                  <button
+                    type="button"
+                    className="auth-password-toggle"
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    title={showLoginPassword ? "Hide password" : "Show password"}
+                  >
+                    {showLoginPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               <button
                 type="submit"
-                className="btn btn-primary"
-                style={{ width: "100%", padding: "12px", marginTop: "12px" }}
+                className="auth-submit-btn"
                 disabled={loading}
               >
-                {loading ? "Authenticating..." : "Access Dashboard"}
-                <ArrowRight size={16} />
+                {loading ? (
+                  <>
+                    <span className="spin" style={{ display: "inline-block", width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%" }}></span>
+                    <span>Authenticating Facility...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Access Gym Dashboard</span>
+                    <ArrowRight size={17} />
+                  </>
+                )}
               </button>
+
+              <div className="auth-footer-shield">
+                <ShieldCheck size={14} color="var(--primary)" />
+                <span>Protected by 256-Bit Tenant Cloud Encryption</span>
+              </div>
             </form>
           ) : (
-            /* Register Form */
-            <form onSubmit={handleRegisterSubmit}>
-              <div style={{ marginBottom: "16px" }}>
-                <h3 style={{ fontSize: "20px", marginBottom: "4px", color: "var(--text-main)" }}>Register Your Gym Facility</h3>
-                <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                  Create your gym profile and owner account to get started.
+            /* ================= ONBOARD GYM FORM ================= */
+            <form onSubmit={handleRegisterSubmit} className="auth-form-body">
+              <div className="auth-form-header">
+                <h2 className="auth-form-title">Onboard New Facility</h2>
+                <p className="auth-form-subtitle">
+                  Configure your facility identity, white-label color, and owner credentials.
                 </p>
               </div>
 
-              <div style={{ maxHeight: "360px", overflowY: "auto", paddingRight: "6px" }}>
-                <div className="form-group">
-                  <label className="form-label">Gym Facility Name</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. Iron Clad Fitness"
-                    value={regGymName}
-                    onChange={handleGymNameChange}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Gym URL Slug</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="iron-clad-fit"
-                    value={regGymSlug}
-                    onChange={(e) => setRegGymSlug(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Primary Brand Accent Color</label>
-                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                    {colorPresets.map((c) => (
-                      <button
-                        key={c.hex}
-                        type="button"
-                        onClick={() => setRegPrimaryColor(c.hex)}
-                        style={{
-                          width: "28px",
-                          height: "28px",
-                          borderRadius: "50%",
-                          background: c.hex,
-                          border: regPrimaryColor === c.hex ? "3px solid var(--text-main)" : "1px solid var(--border-medium)",
-                          cursor: "pointer",
-                          boxShadow: regPrimaryColor === c.hex ? `0 0 8px ${c.hex}` : "none",
-                        }}
-                        title={c.name}
-                      />
-                    ))}
+              <div className="auth-form-scroll-box">
+                {/* 1. Gym Facility Name */}
+                <div className="form-group" style={{ marginBottom: "14px" }}>
+                  <label className="form-label" style={{ display: "block", marginBottom: "6px", fontSize: "12px", fontWeight: 700, color: "var(--text-main)" }}>
+                    Gym Facility Name
+                  </label>
+                  <div className="auth-input-wrapper">
+                    <div className="auth-input-icon">
+                      <Building2 size={16} />
+                    </div>
                     <input
-                      type="color"
-                      value={regPrimaryColor}
-                      onChange={(e) => setRegPrimaryColor(e.target.value)}
-                      style={{
-                        width: "34px",
-                        height: "28px",
-                        borderRadius: "6px",
-                        border: "1px solid var(--border-medium)",
-                        cursor: "pointer",
-                        background: "transparent",
-                      }}
+                      type="text"
+                      className="auth-field-input"
+                      placeholder="e.g. Iron Clad Fitness"
+                      value={regGymName}
+                      onChange={handleGymNameChange}
+                      required
                     />
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Owner Full Name</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Hamza Tariq"
-                    value={regOwnerName}
-                    onChange={(e) => setRegOwnerName(e.target.value)}
-                    required
-                  />
+                {/* 2. Gym URL Slug */}
+                <div className="form-group" style={{ marginBottom: "14px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                    <label className="form-label" style={{ margin: 0, fontSize: "12px", fontWeight: 700, color: "var(--text-main)" }}>
+                      Entrance URL Slug
+                    </label>
+                    <span style={{ fontSize: "11px", color: "var(--primary)", fontWeight: 600 }}>
+                      gymtrack.app/scan/{regGymSlug || "your-gym"}
+                    </span>
+                  </div>
+                  <div className="auth-input-wrapper">
+                    <div className="auth-input-icon">
+                      <Globe size={16} />
+                    </div>
+                    <input
+                      type="text"
+                      className="auth-field-input"
+                      placeholder="iron-clad-fitness"
+                      value={regGymSlug}
+                      onChange={(e) => setRegGymSlug(e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Owner Email</label>
-                  <input
-                    type="email"
-                    className="form-input"
-                    placeholder="owner@ironclad.com"
-                    value={regOwnerEmail}
-                    onChange={(e) => setRegOwnerEmail(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Password</label>
-                  <input
-                    type="password"
-                    className="form-input"
-                    placeholder="••••••••"
-                    value={regOwnerPassword}
-                    onChange={(e) => setRegOwnerPassword(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span>Owner Phone (WhatsApp)</span>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Required &amp; Unique</span>
+                {/* 3. Primary Brand Accent Color */}
+                <div className="form-group" style={{ marginBottom: "14px" }}>
+                  <label className="form-label" style={{ display: "block", marginBottom: "6px", fontSize: "12px", fontWeight: 700, color: "var(--text-main)" }}>
+                    White-Label Theme Accent Color
                   </label>
-                  <input
-                    type="tel"
-                    className="form-input"
-                    placeholder="03001234567"
-                    value={regOwnerPhone}
-                    onChange={(e) => setRegOwnerPhone(e.target.value)}
-                    required
-                  />
-                  <div style={{ fontSize: "11.5px", color: "var(--text-muted)", marginTop: "4px" }}>
-                    Must be a unique mobile/WhatsApp number not registered to another gym.
+                  <div className="auth-color-presets-row">
+                    {colorPresets.map((c) => {
+                      const isSelected = regPrimaryColor.toLowerCase() === c.hex.toLowerCase();
+                      return (
+                        <button
+                          key={c.hex}
+                          type="button"
+                          className={`auth-color-swatch ${isSelected ? "selected" : ""}`}
+                          onClick={() => setRegPrimaryColor(c.hex)}
+                          style={{ background: c.hex }}
+                          title={c.name}
+                        >
+                          {isSelected && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
+                        </button>
+                      );
+                    })}
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto" }}>
+                      <input
+                        type="color"
+                        value={regPrimaryColor.startsWith("#") ? regPrimaryColor : "#E11D48"}
+                        onChange={(e) => setRegPrimaryColor(e.target.value)}
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          borderRadius: "8px",
+                          border: "1px solid var(--border-medium)",
+                          cursor: "pointer",
+                          background: "transparent",
+                          padding: "2px",
+                        }}
+                        title="Pick custom color"
+                      />
+                      <span style={{ fontSize: "11.5px", fontFamily: "monospace", color: "var(--text-muted)", fontWeight: 700 }}>
+                        {regPrimaryColor.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Owner Full Name */}
+                <div className="form-group" style={{ marginBottom: "14px" }}>
+                  <label className="form-label" style={{ display: "block", marginBottom: "6px", fontSize: "12px", fontWeight: 700, color: "var(--text-main)" }}>
+                    Facility Owner Full Name
+                  </label>
+                  <div className="auth-input-wrapper">
+                    <div className="auth-input-icon">
+                      <User size={16} />
+                    </div>
+                    <input
+                      type="text"
+                      className="auth-field-input"
+                      placeholder="Hamza Tariq"
+                      value={regOwnerName}
+                      onChange={(e) => setRegOwnerName(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* 5. Owner Email */}
+                <div className="form-group" style={{ marginBottom: "14px" }}>
+                  <label className="form-label" style={{ display: "block", marginBottom: "6px", fontSize: "12px", fontWeight: 700, color: "var(--text-main)" }}>
+                    Owner Email (Login Username)
+                  </label>
+                  <div className="auth-input-wrapper">
+                    <div className="auth-input-icon">
+                      <Mail size={16} />
+                    </div>
+                    <input
+                      type="email"
+                      className="auth-field-input"
+                      placeholder="owner@ironclad.com"
+                      value={regOwnerEmail}
+                      onChange={(e) => setRegOwnerEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* 6. Owner Password */}
+                <div className="form-group" style={{ marginBottom: "14px" }}>
+                  <label className="form-label" style={{ display: "block", marginBottom: "6px", fontSize: "12px", fontWeight: 700, color: "var(--text-main)" }}>
+                    Account Password
+                  </label>
+                  <div className="auth-input-wrapper">
+                    <div className="auth-input-icon">
+                      <Lock size={16} />
+                    </div>
+                    <input
+                      type={showRegPassword ? "text" : "password"}
+                      className="auth-field-input"
+                      placeholder="••••••••"
+                      value={regOwnerPassword}
+                      onChange={(e) => setRegOwnerPassword(e.target.value)}
+                      required
+                      style={{ paddingRight: "40px" }}
+                    />
+                    <button
+                      type="button"
+                      className="auth-password-toggle"
+                      onClick={() => setShowRegPassword(!showRegPassword)}
+                      title={showRegPassword ? "Hide password" : "Show password"}
+                    >
+                      {showRegPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 7. Owner Phone / WhatsApp */}
+                <div className="form-group" style={{ marginBottom: "10px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                    <label className="form-label" style={{ margin: 0, fontSize: "12px", fontWeight: 700, color: "var(--text-main)" }}>
+                      Owner Phone (WhatsApp Active)
+                    </label>
+                    <span style={{ fontSize: "10.5px", color: "var(--color-warning)", fontWeight: 700 }}>
+                      Unique Number Required
+                    </span>
+                  </div>
+                  <div className="auth-input-wrapper">
+                    <div className="auth-input-icon">
+                      <Phone size={16} />
+                    </div>
+                    <input
+                      type="tel"
+                      className="auth-field-input"
+                      placeholder="03001234567"
+                      value={regOwnerPhone}
+                      onChange={(e) => setRegOwnerPhone(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+                    Used for critical WhatsApp recovery and facility verification alerts.
                   </div>
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="btn btn-primary"
-                style={{ width: "100%", padding: "12px", marginTop: "16px" }}
+                className="auth-submit-btn"
                 disabled={loading}
               >
-                {loading ? "Setting Up Gym..." : "Launch Gym Platform"}
-                <ArrowRight size={16} />
+                {loading ? (
+                  <>
+                    <span className="spin" style={{ display: "inline-block", width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%" }}></span>
+                    <span>Provisioning Gym Instance...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Launch Gym Platform</span>
+                    <Sparkles size={17} />
+                  </>
+                )}
               </button>
+
+              <div className="auth-footer-shield">
+                <CheckCircle2 size={14} color="var(--color-success)" />
+                <span>Instant Provisioning • White-label Setup Included</span>
+              </div>
             </form>
           )}
-        </div>
-      </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 };

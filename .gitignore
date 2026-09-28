@@ -3,6 +3,8 @@
 .env.*
 !.env.example
 *.env
+*.db
+*.sqlite3
 
 # Python & Virtual Environments
 venv/

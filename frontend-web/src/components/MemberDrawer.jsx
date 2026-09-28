@@ -235,7 +235,7 @@ export const MemberDrawer = ({ member, onClose, onRefresh }) => {
           {/* Attendance History Section */}
           <div>
             <h4 style={{ fontSize: "15px", display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", fontWeight: 800 }}>
-              <Clock size={17} color="#2563EB" />
+              <Clock size={17} color="var(--primary)" />
               Recent Entrance Check-ins ({attendance.length})
             </h4>
 

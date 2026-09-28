@@ -30,7 +30,7 @@ export const QRPosterModal = () => {
   };
 
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+    <div className="qr-poster-page" style={{ maxWidth: "800px", margin: "0 auto" }}>
       {/* Controls Bar (hidden during print) */}
       <div
         className="no-print"
@@ -78,8 +78,9 @@ export const QRPosterModal = () => {
           overflow: "hidden",
         }}
       >
-        {/* Glow accent */}
+        {/* Glow accent (hidden during print) */}
         <div
+          className="no-print"
           style={{
             position: "absolute",
             top: "-120px",

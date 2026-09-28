@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
-import { Navbar } from "./components/Navbar";
+import { Sidebar } from "./components/Sidebar";
+import { TopHeader } from "./components/TopHeader";
 import { ActionBanner } from "./components/ActionBanner";
 import { DashboardView } from "./views/DashboardView";
 import { FeesView } from "./views/FeesView";
 import { MembersView } from "./views/MembersView";
 import { AttendanceView } from "./views/AttendanceView";
+import { SettingsView } from "./views/SettingsView";
 import { QRPosterModal } from "./components/QRPosterModal";
 import { AuthView } from "./views/AuthView";
 import { MemberScanView } from "./views/MemberScanView";
@@ -17,6 +19,7 @@ const MainApp = () => {
   const { token, loading } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [alertsData, setAlertsData] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Check if current user is an athlete opening their WhatsApp scanner pass
   const isMemberScanRoute = 
@@ -77,49 +80,67 @@ const MainApp = () => {
   }
 
   return (
-    <div className="app-container">
-      {/* Top Sticky Navigation */}
-      <Navbar
+    <div className="app-layout">
+      {/* 1. Left Vertical Sidebar Matching Mockup */}
+      <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         alertsData={alertsData}
-        onRefreshAlerts={fetchAlerts}
       />
 
-      {/* Main Content Area */}
-      <main className="main-content" key={activeTab}>
-        {/* Urgent Action Banner */}
-        {activeTab !== "fees" && (
-          <ActionBanner
-            alertsData={alertsData}
-            onAction={() => setActiveTab("fees")}
-          />
-        )}
+      {/* 2. Main Right Container */}
+      <div className="app-main-wrapper">
+        {/* Top Header with Pill Search & User Profile */}
+        <TopHeader
+          alertsData={alertsData}
+          onRefreshAlerts={fetchAlerts}
+          onNavigate={(tab) => setActiveTab(tab)}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+        />
 
-        {/* View Switcher */}
-        {activeTab === "dashboard" && (
-          <DashboardView
-            onNavigate={(tab) => setActiveTab(tab)}
-            onRefreshAlerts={fetchAlerts}
-          />
-        )}
+        {/* Main Content Body */}
+        <main className="main-content" key={activeTab}>
+          {/* Urgent Action Banner */}
+          {activeTab !== "fees" && (
+            <ActionBanner
+              alertsData={alertsData}
+              onAction={() => setActiveTab("fees")}
+            />
+          )}
 
-        {activeTab === "fees" && (
-          <FeesView onRefreshAlerts={fetchAlerts} />
-        )}
+          {/* View Switcher */}
+          {activeTab === "dashboard" && (
+            <DashboardView
+              onNavigate={(tab) => setActiveTab(tab)}
+              onRefreshAlerts={fetchAlerts}
+            />
+          )}
 
-        {activeTab === "members" && (
-          <MembersView />
-        )}
+          {activeTab === "fees" && (
+            <FeesView onRefreshAlerts={fetchAlerts} />
+          )}
 
-        {activeTab === "attendance" && (
-          <AttendanceView />
-        )}
+          {activeTab === "members" && (
+            <MembersView 
+              externalSearchQuery={searchQuery}
+              onClearSearch={() => setSearchQuery("")}
+            />
+          )}
 
-        {activeTab === "qr-poster" && (
-          <QRPosterModal />
-        )}
-      </main>
+          {activeTab === "attendance" && (
+            <AttendanceView />
+          )}
+
+          {activeTab === "settings" && (
+            <SettingsView />
+          )}
+
+          {activeTab === "qr-poster" && (
+            <QRPosterModal />
+          )}
+        </main>
+      </div>
     </div>
   );
 };
