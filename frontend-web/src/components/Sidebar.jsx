@@ -4,7 +4,7 @@ import {
   Users, 
   CalendarCheck, 
   CreditCard, 
-  BarChart3, 
+  QrCode, 
   Settings, 
   Dumbbell,
   TrendingUp,
@@ -21,7 +21,7 @@ export const Sidebar = ({ activeTab, setActiveTab, alertsData, isOpen, onClose }
     { id: "members", label: "Members", icon: Users },
     { id: "attendance", label: "Attendance", icon: CalendarCheck },
     { id: "fees", label: "Payments", icon: CreditCard, badge: totalAlerts },
-    { id: "qr-poster", label: "Reports", icon: BarChart3 },
+    { id: "qr-poster", label: "Entrance QR", icon: QrCode },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
