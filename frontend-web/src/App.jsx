@@ -20,6 +20,8 @@ const MainApp = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [alertsData, setAlertsData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
 
   // Check if current user is an athlete opening their WhatsApp scanner pass
   const isMemberScanRoute = 
@@ -86,6 +88,8 @@ const MainApp = () => {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         alertsData={alertsData}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
 
       {/* 2. Main Right Container */}
@@ -97,7 +101,9 @@ const MainApp = () => {
           onNavigate={(tab) => setActiveTab(tab)}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          onMenuOpen={() => setSidebarOpen(true)}
         />
+
 
         {/* Main Content Body */}
         <main className="main-content" key={activeTab}>

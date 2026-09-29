@@ -202,6 +202,21 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0 auto;
 }
 
+/* Desktop defaults: hide mobile-only elements */
+.header-hamburger {
+  display: none;
+}
+.mobile-bottom-nav {
+  display: none;
+}
+.sidebar-mobile-backdrop {
+  display: none;
+}
+.sidebar-mobile-close {
+  display: none;
+}
+
+
 /* ==========================================================================
    1. LEFT VERTICAL SIDEBAR (MATCHING MOCKUP)
    ========================================================================== */
@@ -3141,67 +3156,407 @@ html:not([data-theme="dark"]) .drawer-box,
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-/* Responsive */
-@media (max-width: 1200px) {
+/* ==========================================================================
+   COMPREHENSIVE RESPONSIVE SYSTEM
+   Breakpoints:
+     1024px  — Tablet landscape: icon-only sidebar rail
+     768px   — Tablet portrait / large mobile: full collapse
+     480px   — Small mobile
+   ========================================================================== */
+
+/* ── TABLET (1024px and below) ─────────────────────────────────────── */
+@media (max-width: 1024px) {
+  /* Sidebar collapses to a narrow icon-only rail */
+  .app-sidebar {
+    width: 72px;
+    min-width: 72px;
+    padding: 20px 10px;
+    margin: 12px 0 12px 12px;
+    border-radius: 20px;
+    overflow: visible;
+  }
+
+  /* Hide all text labels in sidebar rail */
+  .sidebar-item-label,
+  .sidebar-brand-divider,
+  .sidebar-brand-text,
+  .sidebar-brand-icon { display: none; }
+
+  /* Show only the gym logo icon, centered */
+  .sidebar-brand {
+    justify-content: center;
+    padding: 0 0 16px;
+    gap: 0;
+  }
+  .sidebar-brand-icon {
+    display: flex;
+    width: 38px;
+    height: 38px;
+  }
+
+  /* Center nav icons */
+  .sidebar-nav-item {
+    justify-content: center;
+    padding: 12px;
+    gap: 0;
+  }
+  /* Show tooltip on hover via title attribute */
+  .sidebar-nav-item:hover::after {
+    content: attr(title);
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--bg-card);
+    border: 1px solid var(--border-medium);
+    color: var(--text-main);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    box-shadow: var(--shadow-card);
+    z-index: 999;
+  }
+
+  /* Badge repositioned on icon */
+  .sidebar-item-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    padding: 1px 5px;
+    font-size: 9px;
+  }
+
+  /* Hide bottom card on rail */
+  .sidebar-bottom-card { display: none; }
+
+  /* Hide mobile bottom nav on tablet */
+  .mobile-bottom-nav { display: none; }
+
+  /* Hide hamburger on tablet (rail is visible) */
+  .header-hamburger { display: none; }
+
+  /* TopHeader: tighter margin */
+  .top-header {
+    margin: 12px 16px 0 10px;
+  }
+
+  /* Content padding tighter */
+  .main-content {
+    padding: 20px 20px 60px;
+  }
+
+  /* Grids: 2 cols max on tablet */
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .dashboard-middle-grid {
-    grid-template-columns: 1fr;
-  }
+  .dashboard-middle-grid,
+  .dashboard-bottom-grid,
   .settings-grid {
     grid-template-columns: 1fr;
   }
+
+  /* Hide mobile backdrop and close on tablet */
+  .sidebar-mobile-backdrop { display: none; }
+  .sidebar-mobile-close { display: none; }
 }
 
-@media (max-width: 900px) {
+/* ── MOBILE (768px and below) ────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* ── App Layout: stack vertically ── */
   .app-layout {
     flex-direction: column;
   }
+
+  /* ── Sidebar: hidden by default, slides in as overlay drawer ── */
   .app-sidebar {
-    width: auto;
-    margin: 12px 16px 0;
-    height: auto;
-    position: static;
-    padding: 16px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    min-width: 280px;
+    height: 100dvh;
+    height: 100vh;
+    border-radius: 0 24px 24px 0;
+    margin: 0;
+    padding: 24px 16px;
+    z-index: 1000;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Restore labels */
+    display: flex;
+    flex-direction: column;
   }
-  .sidebar-bottom-card {
-    display: none;
+  .app-sidebar.sidebar-mobile-open {
+    transform: translateX(0);
   }
+
+  /* ── Restore all sidebar labels hidden by tablet rule ── */
+  .sidebar-item-label { display: inline; }
+  .sidebar-brand-divider { display: block; }
+  .sidebar-brand-text { display: flex; }
+  .sidebar-brand-icon { display: flex; width: 42px; height: 42px; }
+  .sidebar-brand { justify-content: flex-start; padding: 0 4px 20px; gap: 12px; }
+  .sidebar-nav-item { justify-content: flex-start; padding: 12px 16px; gap: 14px; }
+  .sidebar-nav-item:hover::after { display: none; }
+  .sidebar-item-badge { position: static; }
+  .sidebar-bottom-card { display: flex; }
+
+  /* ── Sidebar mobile close button ── */
+  .sidebar-mobile-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #FFFFFF;
+    cursor: pointer;
+    z-index: 10;
+  }
+  [data-theme="light"] .sidebar-mobile-close {
+    background: rgba(0,0,0,0.06);
+    border-color: rgba(0,0,0,0.08);
+    color: var(--text-main);
+  }
+
+  /* ── Overlay backdrop ── */
+  .sidebar-mobile-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 999;
+    animation: fadeIn 0.2s ease;
+  }
+
+  /* ── App main wrapper: full width ── */
+  .app-main-wrapper {
+    width: 100%;
+  }
+
+  /* ── TopHeader: compact for mobile ── */
   .top-header {
-    margin: 12px 16px 0;
+    margin: 10px 12px 0;
+    padding: 0 12px;
+    height: 56px;
+    border-radius: 18px;
     top: 10px;
+    gap: 8px;
   }
-  .dashboard-bottom-grid {
+
+  /* ── Hamburger: visible on mobile ── */
+  .header-hamburger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #FFFFFF;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background var(--transition-fast) ease;
+  }
+  [data-theme="light"] .header-hamburger {
+    background: rgba(0,0,0,0.05);
+    border-color: rgba(0,0,0,0.08);
+    color: var(--text-main);
+  }
+  .header-hamburger:hover {
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  /* ── Search bar: shrink to fill remaining space ── */
+  .header-search-wrapper {
+    flex: 1;
+    min-width: 0;
+  }
+  .header-search-input {
+    font-size: 13px;
+  }
+
+  /* ── Hide user text labels on mobile, keep avatar ── */
+  .user-text-info { display: none; }
+  .user-chevron { display: none; }
+  .header-user-pill {
+    padding: 4px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    gap: 0;
+  }
+
+  /* ── Main content: full padding, account for bottom nav ── */
+  .main-content {
+    padding: 16px 14px 90px;
+  }
+
+  /* ── Hide mobile nav tooltips ── */
+  .sidebar-nav-item:hover::after { display: none; }
+
+  /* ── Bottom Tab Navigation ── */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 900;
+    height: 64px;
+    background: #0C1322;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 -8px 24px rgba(0,0,0,0.4);
+    padding: 0 4px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    align-items: stretch;
+    justify-content: space-around;
+  }
+  [data-theme="light"] .mobile-bottom-nav {
+    background: rgba(255,255,255,0.96);
+    border-top-color: rgba(0,0,0,0.08);
+    box-shadow: 0 -4px 20px rgba(15,23,42,0.08);
+  }
+
+  .mobile-tab-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 3px;
+    border: none;
+    background: transparent;
+    color: #64748B;
+    cursor: pointer;
+    padding: 6px 4px;
+    border-radius: 0;
+    transition: color var(--transition-fast) ease;
+    position: relative;
+    font-family: var(--font-body);
+  }
+  [data-theme="light"] .mobile-tab-btn {
+    color: #94A3B8;
+  }
+  .mobile-tab-btn.active {
+    color: var(--primary);
+  }
+  .mobile-tab-btn.active::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 20%;
+    right: 20%;
+    height: 2px;
+    background: var(--primary);
+    border-radius: 0 0 3px 3px;
+  }
+
+  .mobile-tab-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mobile-tab-badge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    background: #EF4444;
+    color: #FFFFFF;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 1px 4px;
+    border-radius: 999px;
+    min-width: 16px;
+    text-align: center;
+  }
+  .mobile-tab-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1;
+  }
+
+  /* ── Grid adjustments ── */
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .dashboard-middle-grid,
+  .dashboard-bottom-grid,
+  .settings-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* ── Dashboard hero banner ── */
+  .hero-banner-inner {
+    padding: 20px 18px;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .hero-quote-widget { display: none; }
+  .hero-text h2 { font-size: 20px; }
+
+  /* ── Dropdowns: full width on mobile ── */
+  .header-alerts-dropdown,
+  .header-user-dropdown {
+    right: 0;
+    left: auto;
+    width: 300px;
   }
 }
 
-@media (max-width: 640px) {
+/* ── SMALL MOBILE (480px and below) ──────────────────────────────────── */
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .main-content {
+    padding: 12px 10px 86px;
+  }
+  .top-header {
+    margin: 8px 10px 0;
+    padding: 0 10px;
+    height: 52px;
+    border-radius: 16px;
+  }
+  .app-sidebar {
+    width: 260px;
+    min-width: 260px;
+  }
+  /* Full single column on tiny screens */
   .kpi-grid {
     grid-template-columns: 1fr;
   }
-  .app-sidebar {
-    margin: 8px 12px 0;
-    border-radius: 20px;
+  .mobile-bottom-nav {
+    height: 60px;
   }
-  .top-header {
-    margin: 8px 12px 0;
-    padding: 0 14px;
-    height: 58px;
-    border-radius: 18px;
-    top: 8px;
+  .mobile-tab-label {
+    font-size: 9px;
   }
-  .main-content {
-    padding: 16px;
-  }
-  .hero-banner-inner {
-    padding: 20px;
-  }
-  .hero-quote-widget {
-    display: none;
+  /* Alerts dropdown fit on small screen */
+  .header-alerts-dropdown {
+    width: 90vw;
+    right: -10px;
   }
 }
+
 
 /* ==========================================================================
    DARK MODE ELEVATION: LOWER 4 SECTIONS MATCH SIDEBAR BACKGROUND (#0C1322)

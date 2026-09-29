@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { 
   LayoutDashboard, 
   Users, 
@@ -8,11 +8,11 @@ import {
   Settings, 
   Dumbbell,
   TrendingUp,
-  Sparkles
+  X
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-export const Sidebar = ({ activeTab, setActiveTab, alertsData }) => {
+export const Sidebar = ({ activeTab, setActiveTab, alertsData, isOpen, onClose }) => {
   const { gym } = useAuth();
   const totalAlerts = alertsData?.total_alerts || 0;
 
@@ -25,59 +25,119 @@ export const Sidebar = ({ activeTab, setActiveTab, alertsData }) => {
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
-  return (
-    <aside className="app-sidebar">
-      {/* Brand Header Matching Reference Layout */}
-      <div className="sidebar-brand" onClick={() => setActiveTab("dashboard")}>
-        <div className="sidebar-brand-icon">
-          {gym?.logo_url ? (
-            <img src={gym.logo_url} alt={gym.name} />
-          ) : (
-            <Dumbbell size={22} color="var(--primary)" />
-          )}
-        </div>
-        <div className="sidebar-brand-divider" />
-        <div className="sidebar-brand-text">
-          <span className="brand-line-1">{gym?.name?.split(" ")[0]?.toUpperCase() || "IRON"}</span>
-          <span className="brand-line-2">{gym?.name?.split(" ").slice(1).join(" ")?.toUpperCase() || "MANAGEMENT"}</span>
-          <span className="brand-line-accent">DASHBOARD</span>
-        </div>
-      </div>
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isOpen]);
 
-      {/* Navigation Links */}
-      <nav className="sidebar-nav">
+  const handleNavClick = (id) => {
+    setActiveTab(id);
+    if (onClose) onClose();
+  };
+
+  return (
+    <>
+      {/* Mobile Overlay Backdrop */}
+      {isOpen && (
+        <div
+          className="sidebar-mobile-backdrop"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside className={`app-sidebar ${isOpen ? "sidebar-mobile-open" : ""}`}>
+        {/* Mobile close button — only visible inside mobile drawer */}
+        <button
+          className="sidebar-mobile-close"
+          onClick={onClose}
+          aria-label="Close menu"
+        >
+          <X size={20} />
+        </button>
+
+        {/* Brand Header */}
+        <div className="sidebar-brand" onClick={() => handleNavClick("dashboard")}>
+          <div className="sidebar-brand-icon">
+            {gym?.logo_url ? (
+              <img src={gym.logo_url} alt={gym.name} />
+            ) : (
+              <Dumbbell size={22} color="var(--primary)" />
+            )}
+          </div>
+          <div className="sidebar-brand-divider" />
+          <div className="sidebar-brand-text">
+            <span className="brand-line-1">{gym?.name?.split(" ")[0]?.toUpperCase() || "IRON"}</span>
+            <span className="brand-line-2">{gym?.name?.split(" ").slice(1).join(" ")?.toUpperCase() || "MANAGEMENT"}</span>
+            <span className="brand-line-accent">DASHBOARD</span>
+          </div>
+        </div>
+
+        {/* Navigation Links */}
+        <nav className="sidebar-nav">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                className={`sidebar-nav-item ${isActive ? "active" : ""}`}
+                onClick={() => handleNavClick(item.id)}
+                title={item.label}
+              >
+                <Icon size={19} className="sidebar-item-icon" />
+                <span className="sidebar-item-label">{item.label}</span>
+                {item.badge > 0 && (
+                  <span className="sidebar-item-badge">{item.badge}</span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Bottom Motivational Card */}
+        <div className="sidebar-bottom-card">
+          <div className="sidebar-card-bg" />
+          <div className="sidebar-card-overlay" />
+          <div className="sidebar-card-content">
+            <h4>Stronger Members Build a Healthier Community</h4>
+            <div className="sidebar-card-bar" />
+            <div className="sidebar-card-footer">
+              <TrendingUp size={16} />
+              <span>Active Performance</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* ===== MOBILE BOTTOM TAB BAR ===== */}
+      <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           return (
             <button
               key={item.id}
-              className={`sidebar-nav-item ${isActive ? "active" : ""}`}
+              className={`mobile-tab-btn ${isActive ? "active" : ""}`}
               onClick={() => setActiveTab(item.id)}
+              aria-label={item.label}
             >
-              <Icon size={19} className="sidebar-item-icon" />
-              <span className="sidebar-item-label">{item.label}</span>
-              {item.badge > 0 && (
-                <span className="sidebar-item-badge">{item.badge}</span>
-              )}
+              <span className="mobile-tab-icon-wrapper">
+                <Icon size={20} />
+                {item.badge > 0 && (
+                  <span className="mobile-tab-badge">{item.badge}</span>
+                )}
+              </span>
+              <span className="mobile-tab-label">{item.label}</span>
             </button>
           );
         })}
       </nav>
-
-      {/* Bottom Motivational Community Card */}
-      <div className="sidebar-bottom-card">
-        <div className="sidebar-card-bg" />
-        <div className="sidebar-card-overlay" />
-        <div className="sidebar-card-content">
-          <h4>Stronger Members Build a Healthier Community</h4>
-          <div className="sidebar-card-bar" />
-          <div className="sidebar-card-footer">
-            <TrendingUp size={16} />
-            <span>Active Performance</span>
-          </div>
-        </div>
-      </div>
-    </aside>
+    </>
   );
 };
