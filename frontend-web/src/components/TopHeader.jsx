@@ -7,11 +7,12 @@ import {
   ChevronDown, 
   LogOut, 
   CheckCircle2,
-  Receipt
+  Receipt,
+  Menu
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-export const TopHeader = ({ alertsData, onRefreshAlerts, onNavigate, searchQuery, setSearchQuery }) => {
+export const TopHeader = ({ alertsData, onRefreshAlerts, onNavigate, searchQuery, setSearchQuery, onMenuToggle }) => {
   const { user, logout } = useAuth();
   const [showBellDropdown, setShowBellDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -47,8 +48,18 @@ export const TopHeader = ({ alertsData, onRefreshAlerts, onNavigate, searchQuery
 
   return (
     <header className="top-header">
+      {/* Mobile Hamburger Menu Button */}
+      <button
+        type="button"
+        className="header-icon-btn mobile-menu-btn"
+        onClick={onMenuToggle}
+        title="Toggle Menu"
+      >
+        <Menu size={20} />
+      </button>
+
       {/* Search Input Bar */}
-      <div className="header-search-wrapper">
+      <div className="header-search-wrapper header-search-desktop">
         <Search size={18} className="header-search-icon" />
         <input
           type="text"

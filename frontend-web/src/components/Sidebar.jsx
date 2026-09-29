@@ -8,11 +8,12 @@ import {
   Settings, 
   Dumbbell,
   TrendingUp,
-  Sparkles
+  Sparkles,
+  X
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-export const Sidebar = ({ activeTab, setActiveTab, alertsData }) => {
+export const Sidebar = ({ activeTab, setActiveTab, alertsData, isMobileOpen, onMobileClose }) => {
   const { gym } = useAuth();
   const totalAlerts = alertsData?.total_alerts || 0;
 
@@ -25,8 +26,8 @@ export const Sidebar = ({ activeTab, setActiveTab, alertsData }) => {
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
-  return (
-    <aside className="app-sidebar">
+  const sidebarContent = (
+    <>
       {/* Brand Header Matching Reference Layout */}
       <div className="sidebar-brand" onClick={() => setActiveTab("dashboard")}>
         <div className="sidebar-brand-icon">
@@ -78,6 +79,52 @@ export const Sidebar = ({ activeTab, setActiveTab, alertsData }) => {
           </div>
         </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar (hidden on mobile via CSS) */}
+      <aside className="app-sidebar app-sidebar-desktop">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile Sidebar Overlay (shown only on mobile when open) */}
+      {isMobileOpen && (
+        <div className="mobile-sidebar-overlay" onClick={onMobileClose}>
+          <aside 
+            className="app-sidebar mobile-sidebar-drawer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button for mobile */}
+            <button className="mobile-sidebar-close" onClick={onMobileClose}>
+              <X size={20} />
+            </button>
+            {sidebarContent}
+          </aside>
+        </div>
+      )}
+
+      {/* Mobile Bottom Navigation Bar (always visible on mobile) */}
+      <nav className="mobile-bottom-nav">
+        {navItems.slice(0, 5).map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              className={`mobile-nav-item ${isActive ? "active" : ""}`}
+              onClick={() => setActiveTab(item.id)}
+            >
+              <Icon size={20} />
+              <span>{item.label}</span>
+              {item.badge > 0 && (
+                <span className="mobile-nav-badge">{item.badge}</span>
+              )}
+            </button>
+          );
+        })}
+      </nav>
+    </>
   );
 };

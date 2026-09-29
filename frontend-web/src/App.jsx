@@ -20,6 +20,7 @@ const MainApp = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [alertsData, setAlertsData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Check if current user is an athlete opening their WhatsApp scanner pass
   const isMemberScanRoute = 
@@ -44,6 +45,12 @@ const MainApp = () => {
   useEffect(() => {
     fetchAlerts();
   }, [fetchAlerts]);
+
+  // Close mobile sidebar when tab changes
+  const handleSetActiveTab = (tab) => {
+    setActiveTab(tab);
+    setIsMobileSidebarOpen(false);
+  };
 
   if (loading) {
     return (
@@ -84,8 +91,10 @@ const MainApp = () => {
       {/* 1. Left Vertical Sidebar Matching Mockup */}
       <Sidebar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleSetActiveTab}
         alertsData={alertsData}
+        isMobileOpen={isMobileSidebarOpen}
+        onMobileClose={() => setIsMobileSidebarOpen(false)}
       />
 
       {/* 2. Main Right Container */}
@@ -94,9 +103,10 @@ const MainApp = () => {
         <TopHeader
           alertsData={alertsData}
           onRefreshAlerts={fetchAlerts}
-          onNavigate={(tab) => setActiveTab(tab)}
+          onNavigate={(tab) => handleSetActiveTab(tab)}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          onMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
         />
 
         {/* Main Content Body */}
@@ -105,14 +115,14 @@ const MainApp = () => {
           {activeTab !== "fees" && (
             <ActionBanner
               alertsData={alertsData}
-              onAction={() => setActiveTab("fees")}
+              onAction={() => handleSetActiveTab("fees")}
             />
           )}
 
           {/* View Switcher */}
           {activeTab === "dashboard" && (
             <DashboardView
-              onNavigate={(tab) => setActiveTab(tab)}
+              onNavigate={(tab) => handleSetActiveTab(tab)}
               onRefreshAlerts={fetchAlerts}
             />
           )}
