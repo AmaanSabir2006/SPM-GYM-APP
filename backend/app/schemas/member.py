@@ -20,6 +20,8 @@ class MemberBase(BaseModel):
 
 class MemberCreate(MemberBase):
     join_date: Optional[date] = None
+    initial_payment_status: Optional[str] = Field(default="unpaid", description="'paid' or 'unpaid'")
+    initial_payment_method: Optional[str] = Field(default="cash", description="'cash', 'easypaisa', 'jazzcash', 'bank_transfer'")
 
 
 class MemberUpdate(BaseModel):
@@ -43,6 +45,9 @@ class MemberResponse(MemberBase):
     gym_id: str
     join_date: date
     status: str
+    current_fee_status: Optional[str] = "unpaid"
+    current_fee_id: Optional[str] = None
+    current_due_date: Optional[date] = None
 
     class Config:
         from_attributes = True

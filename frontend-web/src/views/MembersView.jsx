@@ -7,13 +7,18 @@ import {
   RefreshCw, 
   Dumbbell, 
   Trash2,
-  MessageCircle
+  MessageCircle,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  DollarSign
 } from "lucide-react";
 import API from "../api/client";
 import { useToast } from "../context/ToastContext";
 import { MemberModal } from "../components/MemberModal";
 import { MemberDrawer } from "../components/MemberDrawer";
 import { MemberWelcomeModal } from "../components/MemberWelcomeModal";
+import { PaymentModal } from "../components/PaymentModal";
 
 export const MembersView = ({ externalSearchQuery = "", onClearSearch }) => {
   const { showToast } = useToast();
@@ -32,6 +37,7 @@ export const MembersView = ({ externalSearchQuery = "", onClearSearch }) => {
   const [inspectingMember, setInspectingMember] = useState(null);
   const [welcomeMemberId, setWelcomeMemberId] = useState(null);
   const [memberToDelete, setMemberToDelete] = useState(null);
+  const [selectedFeeForPayment, setSelectedFeeForPayment] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
   const handleConfirmDelete = async () => {
@@ -163,6 +169,7 @@ export const MembersView = ({ externalSearchQuery = "", onClearSearch }) => {
               <th>Join Date</th>
               <th>Monthly Fee</th>
               <th>Renewal Day</th>
+              <th>Fee Status</th>
               <th>Access Status</th>
               <th>Actions</th>
             </tr>
@@ -170,7 +177,7 @@ export const MembersView = ({ externalSearchQuery = "", onClearSearch }) => {
           <tbody>
             {members.length === 0 ? (
               <tr>
-                <td colSpan="8" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                <td colSpan="9" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
                   <Dumbbell size={32} color="var(--border-medium)" style={{ margin: "0 auto 8px" }} />
                   {loading ? "Loading member directory..." : "No members found in current filter."}
                 </td>
@@ -243,10 +250,50 @@ export const MembersView = ({ externalSearchQuery = "", onClearSearch }) => {
                       </span>
                     </td>
                     <td>
+                      {m.current_fee_status === "paid" ? (
+                        <span className="badge badge-paid" style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          <CheckCircle2 size={12} /> Paid
+                        </span>
+                      ) : m.current_fee_status === "overdue" ? (
+                        <span className="badge badge-overdue" style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          <AlertCircle size={12} /> Overdue
+                        </span>
+                      ) : (
+                        <span className="badge badge-unpaid" style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          <Clock size={12} /> Unpaid
+                        </span>
+                      )}
+                    </td>
+                    <td>
                       <span className={`badge badge-${m.status}`}>{m.status}</span>
                     </td>
                     <td>
                       <div style={{ display: "flex", gap: "6px" }}>
+                        {m.current_fee_status !== "paid" && (
+                          <button
+                            className="btn btn-primary btn-sm"
+                            style={{ 
+                              padding: "4px 9px", 
+                              fontSize: "11.5px", 
+                              background: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                              borderColor: "transparent",
+                              color: "white",
+                              fontWeight: 700,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                            onClick={() => setSelectedFeeForPayment({
+                              id: m.current_fee_id,
+                              amount_due: m.monthly_fee,
+                              memberName: m.full_name,
+                            })}
+                            title={`Collect fee from ${m.full_name}`}
+                          >
+                            <DollarSign size={13} />
+                            Collect
+                          </button>
+                        )}
                         <button
                           className="btn btn-secondary btn-sm"
                           style={{ padding: "4px 8px", color: "var(--color-whatsapp)" }}
@@ -294,6 +341,17 @@ export const MembersView = ({ externalSearchQuery = "", onClearSearch }) => {
           </tbody>
         </table>
       </div>
+
+      {selectedFeeForPayment && (
+        <PaymentModal
+          feeRecord={selectedFeeForPayment}
+          memberName={selectedFeeForPayment.memberName}
+          onClose={() => setSelectedFeeForPayment(null)}
+          onSuccess={() => {
+            fetchMembers();
+          }}
+        />
+      )}
 
       {showAddModal && (
         <MemberModal

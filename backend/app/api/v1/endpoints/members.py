@@ -1,3 +1,4 @@
+import calendar
 from datetime import date, timedelta
 from typing import List, Optional
 from urllib.parse import quote
@@ -12,6 +13,7 @@ from app.core.phone import normalize_phone_number, get_phone_lookup_variants, fo
 from app.models.gym import Gym
 from app.models.user import User
 from app.models.member import Member
+from app.models.fee import FeeRecord
 from app.schemas.member import MemberCreate, MemberUpdate, MemberResponse, MemberWelcomeResponse
 
 router = APIRouter()
@@ -81,7 +83,9 @@ async def list_members(
     """
     List all members belonging to the authenticated tenant gym.
     Supports filtering by status and searching by name or phone.
+    Dynamically attaches the latest fee record status ('paid', 'unpaid', 'overdue').
     """
+    today = date.today()
     query = select(Member).where(Member.gym_id == gym_id)
     if status_filter:
         query = query.where(Member.status == status_filter)
@@ -90,7 +94,64 @@ async def list_members(
             (Member.full_name.ilike(f"%{search}%")) | (Member.phone.ilike(f"%{search}%"))
         )
     result = await db.execute(query)
-    return result.scalars().all()
+    members = result.scalars().all()
+    if not members:
+        return []
+
+    # Query all fee records for this gym to attach current fee status
+    fees_res = await db.execute(
+        select(FeeRecord)
+        .where(FeeRecord.gym_id == gym_id)
+        .order_by(FeeRecord.due_date.desc())
+    )
+    all_fees = fees_res.scalars().all()
+
+    # Map the latest fee record per member
+    latest_fee_map = {}
+    fee_status_dirty = False
+    for f in all_fees:
+        if f.member_id not in latest_fee_map:
+            # Sync overdue status if due_date has passed and status is still unpaid
+            if f.payment_status == "unpaid" and f.due_date < today:
+                f.payment_status = "overdue"
+                fee_status_dirty = True
+            latest_fee_map[f.member_id] = f
+
+    # Auto-generate initial fee record for active members that have no record yet (e.g. legacy/newly added members)
+    for m in members:
+        if m.id not in latest_fee_map and m.status == "active":
+            max_days = calendar.monthrange(today.year, today.month)[1]
+            cycle_day = min(max(1, m.billing_cycle_day), max_days)
+            due_date = date(today.year, today.month, cycle_day)
+            init_status = "overdue" if due_date < today else "unpaid"
+            new_fee = FeeRecord(
+                gym_id=gym_id,
+                member_id=m.id,
+                amount_due=m.monthly_fee,
+                amount_paid=0,
+                due_date=due_date,
+                payment_status=init_status,
+            )
+            db.add(new_fee)
+            latest_fee_map[m.id] = new_fee
+            fee_status_dirty = True
+
+    if fee_status_dirty:
+        await db.commit()
+
+    # Attach current fee details to member response objects
+    for m in members:
+        fee = latest_fee_map.get(m.id)
+        if fee:
+            m.current_fee_status = fee.payment_status
+            m.current_fee_id = fee.id
+            m.current_due_date = fee.due_date
+        else:
+            m.current_fee_status = "unpaid"
+            m.current_fee_id = None
+            m.current_due_date = None
+
+    return members
 
 
 @router.post("", response_model=MemberResponse, status_code=status.HTTP_201_CREATED)
@@ -101,7 +162,8 @@ async def create_member(
 ):
     """
     Register a new member scoped to current tenant gym.
-    Validates phone uniqueness and prevents assigning the gym owner's phone number.
+    Validates phone uniqueness, prevents assigning owner's phone,
+    and atomically creates the initial membership fee invoice.
     """
     raw_phone = (member_in.phone or "").strip()
     digits = "".join(filter(str.isdigit, raw_phone))
@@ -165,8 +227,39 @@ async def create_member(
         status="active",
     )
     db.add(new_member)
+    await db.flush()
+
+    # Atomic creation of Initial FeeRecord
+    today = date.today()
+    max_days = calendar.monthrange(today.year, today.month)[1]
+    cycle_day = min(max(1, new_member.billing_cycle_day), max_days)
+    due_date = date(today.year, today.month, cycle_day)
+
+    is_paid_now = getattr(member_in, "initial_payment_status", "unpaid") == "paid"
+    payment_method = getattr(member_in, "initial_payment_method", "cash") if is_paid_now else None
+    
+    fee_status = "paid" if is_paid_now else ("overdue" if due_date < today else "unpaid")
+    amount_paid = new_member.monthly_fee if is_paid_now else 0
+
+    init_fee = FeeRecord(
+        gym_id=gym_id,
+        member_id=new_member.id,
+        amount_due=new_member.monthly_fee,
+        amount_paid=amount_paid,
+        due_date=due_date,
+        paid_date=today if is_paid_now else None,
+        payment_status=fee_status,
+        payment_method=payment_method,
+    )
+    db.add(init_fee)
     await db.commit()
     await db.refresh(new_member)
+    await db.refresh(init_fee)
+
+    new_member.current_fee_status = init_fee.payment_status
+    new_member.current_fee_id = init_fee.id
+    new_member.current_due_date = init_fee.due_date
+
     return new_member
 
 
@@ -179,12 +272,32 @@ async def get_member(
     """
     Retrieve specific member profile ensuring tenant isolation.
     """
+    today = date.today()
     result = await db.execute(
         select(Member).where(Member.id == member_id, Member.gym_id == gym_id)
     )
     member = result.scalar_one_or_none()
     if not member:
         raise HTTPException(status_code=404, detail="Member not found in your gym.")
+
+    fee_res = await db.execute(
+        select(FeeRecord)
+        .where(FeeRecord.gym_id == gym_id, FeeRecord.member_id == member_id)
+        .order_by(FeeRecord.due_date.desc())
+    )
+    latest_fee = fee_res.scalars().first()
+    if latest_fee:
+        if latest_fee.payment_status == "unpaid" and latest_fee.due_date < today:
+            latest_fee.payment_status = "overdue"
+            await db.commit()
+        member.current_fee_status = latest_fee.payment_status
+        member.current_fee_id = latest_fee.id
+        member.current_due_date = latest_fee.due_date
+    else:
+        member.current_fee_status = "unpaid"
+        member.current_fee_id = None
+        member.current_due_date = None
+
     return member
 
 
@@ -198,6 +311,7 @@ async def update_member(
     """
     Update member details, validating phone uniqueness and owner protection.
     """
+    today = date.today()
     result = await db.execute(
         select(Member).where(Member.id == member_id, Member.gym_id == gym_id)
     )
@@ -254,6 +368,25 @@ async def update_member(
 
     await db.commit()
     await db.refresh(member)
+
+    fee_res = await db.execute(
+        select(FeeRecord)
+        .where(FeeRecord.gym_id == gym_id, FeeRecord.member_id == member_id)
+        .order_by(FeeRecord.due_date.desc())
+    )
+    latest_fee = fee_res.scalars().first()
+    if latest_fee:
+        if latest_fee.payment_status == "unpaid" and latest_fee.due_date < today:
+            latest_fee.payment_status = "overdue"
+            await db.commit()
+        member.current_fee_status = latest_fee.payment_status
+        member.current_fee_id = latest_fee.id
+        member.current_due_date = latest_fee.due_date
+    else:
+        member.current_fee_status = "unpaid"
+        member.current_fee_id = None
+        member.current_due_date = None
+
     return member
 
 
