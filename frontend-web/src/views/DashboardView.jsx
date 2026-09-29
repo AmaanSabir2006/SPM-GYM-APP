@@ -36,6 +36,7 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
   const [attStats, setAttStats] = useState(null);
   const [profitData, setProfitData] = useState(null);
   const [todayAttendance, setTodayAttendance] = useState([]);
+  const [membersMap, setMembersMap] = useState({});
   const [membersCount, setMembersCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -60,6 +61,13 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
       setStats(feeRes.data);
       setAttStats(attStatsRes.data);
       setTodayAttendance(todayAttRes.data);
+      const map = {};
+      if (Array.isArray(memRes.data)) {
+        memRes.data.forEach((m) => {
+          map[m.id] = m;
+        });
+      }
+      setMembersMap(map);
       setMembersCount(memRes.data.length);
       setProfitData(profitRes.data);
     } catch (err) {
@@ -97,7 +105,7 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
   // Determine greeting by current time
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
-  const userName = user?.name?.split(" ")[0] || "Ali";
+  const userName = user?.name?.split(" ")[0] || "Owner";
 
   return (
     <div className="dashboard-page">
@@ -408,25 +416,29 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
             </div>
           ) : (
             <div className="live-scans-feed">
-              {todayAttendance.slice(0, 5).map((att) => (
-                <div key={att.id} className="feed-item">
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div className="feed-avatar-dot">
-                      <Zap size={14} />
+              {todayAttendance.slice(0, 5).map((att) => {
+                const member = membersMap[att.member_id];
+                const memberName = member?.full_name || `Athlete #${att.member_id.substring(0, 8)}`;
+                return (
+                  <div key={att.id} className="feed-item">
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <div className="feed-avatar-dot">
+                        <Zap size={14} />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: "13px" }}>{memberName}</div>
+                        <div style={{ fontSize: "11px", color: "var(--text-dim)" }}>Entrance Verified</div>
+                      </div>
                     </div>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: "13px" }}>Athlete #{att.member_id.substring(0, 8)}</div>
-                      <div style={{ fontSize: "11px", color: "var(--text-dim)" }}>Entrance Verified</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <span style={{ fontWeight: 600, fontSize: "12.5px" }}>
+                        {new Date(att.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <span className="badge badge-active">{att.check_in_method}</span>
                     </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <span style={{ fontWeight: 600, fontSize: "12.5px" }}>
-                      {new Date(att.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    <span className="badge badge-active">{att.check_in_method}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -463,65 +475,36 @@ export const DashboardView = ({ onNavigate, onRefreshAlerts }) => {
               </thead>
               <tbody>
                 {todayAttendance && todayAttendance.length > 0 ? (
-                  todayAttendance.slice(0, 4).map((att) => (
-                    <tr key={att.id}>
-                      <td className="activity-time">
-                        {new Date(att.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </td>
-                      <td>
-                        <span className="member-name-tag">Athlete #{att.member_id.substring(0, 6)}</span>
-                      </td>
-                      <td>
-                        <span className="activity-action-badge action-green">
-                          <span className="action-bullet green" /> Entrance Scan
-                        </span>
-                      </td>
-                      <td className="activity-detail-text">{att.check_in_method || "Turnstile Verified"}</td>
-                    </tr>
-                  ))
+                  todayAttendance.slice(0, 6).map((att) => {
+                    const member = membersMap[att.member_id];
+                    const memberName = member?.full_name || `Athlete #${att.member_id.substring(0, 6)}`;
+                    return (
+                      <tr key={att.id}>
+                        <td className="activity-time">
+                          {new Date(att.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td>
+                          <span className="member-name-tag">{memberName}</span>
+                        </td>
+                        <td>
+                          <span className="activity-action-badge action-green">
+                            <span className="action-bullet green" /> Entrance Scan
+                          </span>
+                        </td>
+                        <td className="activity-detail-text">{att.check_in_method || "Turnstile Verified"}</td>
+                      </tr>
+                    );
+                  })
                 ) : (
-                  <>
-                    <tr>
-                      <td className="activity-time">09:24 AM</td>
-                      <td><span className="member-name-tag">Zayn Malik</span></td>
-                      <td>
-                        <span className="activity-action-badge action-green">
-                          <span className="action-bullet green" /> Entrance Scan
-                        </span>
-                      </td>
-                      <td className="activity-detail-text">Turnstile pass verified</td>
-                    </tr>
-                    <tr>
-                      <td className="activity-time">08:17 AM</td>
-                      <td><span className="member-name-tag">Bilal Tariq</span></td>
-                      <td>
-                        <span className="activity-action-badge action-blue">
-                          <span className="action-bullet blue" /> Payment Received
-                        </span>
-                      </td>
-                      <td className="activity-detail-text">Monthly fee • Rs. 5,000</td>
-                    </tr>
-                    <tr>
-                      <td className="activity-time">07:43 AM</td>
-                      <td><span className="member-name-tag">Hamza Khan</span></td>
-                      <td>
-                        <span className="activity-action-badge action-purple">
-                          <span className="action-bullet purple" /> New Member
-                        </span>
-                      </td>
-                      <td className="activity-detail-text">VIP Athlete enrolled</td>
-                    </tr>
-                    <tr>
-                      <td className="activity-time">06:12 AM</td>
-                      <td><span className="member-name-tag">Facility</span></td>
-                      <td>
-                        <span className="activity-action-badge action-coral">
-                          <span className="action-bullet coral" /> Expense Logged
-                        </span>
-                      </td>
-                      <td className="activity-detail-text">Gym equipment service</td>
-                    </tr>
-                  </>
+                  <tr>
+                    <td colSpan="4" style={{ textAlign: "center", padding: "36px 16px", color: "var(--text-muted)" }}>
+                      <Activity size={28} color="var(--border-medium)" style={{ margin: "0 auto 8px", display: "block" }} />
+                      <div style={{ fontWeight: 700, fontSize: "13px", color: "var(--text-main)" }}>No Recent Activity Today</div>
+                      <div style={{ fontSize: "12px", marginTop: "4px" }}>
+                        Entrance check-ins and member scans will appear here live.
+                      </div>
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>

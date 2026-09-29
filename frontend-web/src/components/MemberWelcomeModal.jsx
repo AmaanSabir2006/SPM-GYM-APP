@@ -25,14 +25,12 @@ export const MemberWelcomeModal = ({ memberId, onClose }) => {
   const [copiedMessage, setCopiedMessage] = useState(false);
   const [detectedLanIp, setDetectedLanIp] = useState("");
 
-  // Default to local Wi-Fi IP if on localhost, otherwise window.location.origin
+  // Default to window.location.origin (dynamically updated by detected LAN IP if on localhost)
   const [customHost, setCustomHost] = useState(() => {
     if (typeof window !== "undefined") {
-      if (window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
-        return window.location.origin;
-      }
+      return window.location.origin;
     }
-    return "http://192.168.100.4:5173";
+    return "";
   });
 
   useEffect(() => {
@@ -73,7 +71,7 @@ export const MemberWelcomeModal = ({ memberId, onClose }) => {
   }, [memberId, customHost]);
 
   // Derived scan URL and formatted WhatsApp text
-  const cleanBase = (customHost || "http://192.168.100.5:5173").replace(/\/$/, "");
+  const cleanBase = (customHost || (typeof window !== "undefined" ? window.location.origin : "")).replace(/\/$/, "");
   const scanUrl = rawData ? `${cleanBase}/scan?mid=${rawData.member_id}` : "";
 
   // Day suffix helper
@@ -330,8 +328,8 @@ _Tip: Add this link to your phone's home screen for fast 1-tap gym entry._`
                       fontWeight: 700,
                       cursor: "pointer",
                       border: "1px solid var(--border-medium)",
-                      background: customHost === window.location.origin && !customHost.includes("192.168.100.5") ? "var(--primary)" : "var(--bg-card)",
-                      color: customHost === window.location.origin && !customHost.includes("192.168.100.5") ? "white" : "var(--text-muted)",
+                      background: customHost === window.location.origin ? "var(--primary)" : "var(--bg-card)",
+                      color: customHost === window.location.origin ? "white" : "var(--text-muted)",
                       display: "flex",
                       alignItems: "center",
                       gap: "4px",
@@ -347,7 +345,7 @@ _Tip: Add this link to your phone's home screen for fast 1-tap gym entry._`
                   className="form-input"
                   value={customHost}
                   onChange={(e) => setCustomHost(e.target.value)}
-                  placeholder="e.g. http://192.168.100.5:5173 or https://yourgym.com"
+                  placeholder="e.g. https://yourgym.com or http://192.168.1.X:5173"
                   style={{ fontSize: "12px", padding: "7px 10px" }}
                 />
               </div>

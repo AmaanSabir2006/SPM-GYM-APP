@@ -1,6 +1,6 @@
 from datetime import date
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 
 class MemberBase(BaseModel):
@@ -8,7 +8,14 @@ class MemberBase(BaseModel):
     phone: str
     emergency_contact: Optional[str] = None
     monthly_fee: float
-    billing_cycle_day: int = 1
+    billing_cycle_day: int = Field(default=1, ge=1, le=31, description="Day of month when fee renews (1 to 31)")
+
+    @field_validator("billing_cycle_day")
+    @classmethod
+    def validate_billing_cycle_day(cls, v: int) -> int:
+        if v is not None and (v < 1 or v > 31):
+            raise ValueError("Fee due day must be between 1 and 31.")
+        return v
 
 
 class MemberCreate(MemberBase):
@@ -20,8 +27,15 @@ class MemberUpdate(BaseModel):
     phone: Optional[str] = None
     emergency_contact: Optional[str] = None
     monthly_fee: Optional[float] = None
-    billing_cycle_day: Optional[int] = None
+    billing_cycle_day: Optional[int] = Field(default=None, ge=1, le=31)
     status: Optional[str] = None
+
+    @field_validator("billing_cycle_day")
+    @classmethod
+    def validate_billing_cycle_day(cls, v: Optional[int]) -> Optional[int]:
+        if v is not None and (v < 1 or v > 31):
+            raise ValueError("Fee due day must be between 1 and 31.")
+        return v
 
 
 class MemberResponse(MemberBase):

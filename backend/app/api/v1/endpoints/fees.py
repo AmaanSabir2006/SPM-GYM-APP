@@ -1,3 +1,4 @@
+import calendar
 import urllib.parse
 from datetime import date
 from typing import List, Optional
@@ -161,7 +162,9 @@ async def generate_monthly_dues(
     created_count = 0
     for m in members:
         # Determine due date for this member's current billing cycle
-        cycle_day = min(m.billing_cycle_day, 28)  # safe day for all months
+        # Dynamically clamp to actual days in the current month (28, 29 in leap year, 30, or 31)
+        max_days = calendar.monthrange(today.year, today.month)[1]
+        cycle_day = min(max(1, m.billing_cycle_day), max_days)
         due_date = date(today.year, today.month, cycle_day)
 
         # Check if a fee record already exists for this member and due date month

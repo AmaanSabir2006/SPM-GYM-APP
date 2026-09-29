@@ -117,7 +117,7 @@ export const QRPosterModal = () => {
           </div>
           <div style={{ textAlign: "left" }}>
             <h1 style={{ fontSize: "28px", fontWeight: 800, letterSpacing: "-0.03em", color: "#0F172A" }}>
-              {gym?.name || "Fitness Club"}
+              {gym?.name || "Official Gym"}
             </h1>
             <div style={{ fontSize: "14px", color: "var(--primary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>
               Official Check-In Station

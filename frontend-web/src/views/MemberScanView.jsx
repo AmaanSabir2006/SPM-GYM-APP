@@ -464,7 +464,7 @@ export const MemberScanView = () => {
           </div>
           <div>
             <div style={{ fontSize: "16px", fontWeight: 900, fontFamily: "var(--font-athletic)", letterSpacing: "0.06em", color: "white", textTransform: "uppercase" }}>
-              {passInfo?.gym_name || "IRON GYM & FITNESS"}
+              {passInfo?.gym_name || "GYM ENTRANCE PASS"}
             </div>
             <div style={{ fontSize: "11px", color: "#10B981", fontWeight: 700, display: "flex", alignItems: "center", gap: "4px" }}>
               <ShieldCheck size={12} />

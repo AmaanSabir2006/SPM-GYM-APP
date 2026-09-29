@@ -72,8 +72,8 @@ export const Sidebar = ({ activeTab, setActiveTab, alertsData, isOpen, onClose }
           </div>
           <div className="sidebar-brand-divider" />
           <div className="sidebar-brand-text">
-            <span className="brand-line-1">{gym?.name?.split(" ")[0]?.toUpperCase() || "IRON"}</span>
-            <span className="brand-line-2">{gym?.name?.split(" ").slice(1).join(" ")?.toUpperCase() || "MANAGEMENT"}</span>
+            <span className="brand-line-1">{gym?.name?.split(" ")[0]?.toUpperCase() || "GYM"}</span>
+            <span className="brand-line-2">{gym?.name?.split(" ").slice(1).join(" ")?.toUpperCase() || "PORTAL"}</span>
             <span className="brand-line-accent">DASHBOARD</span>
           </div>
         </div>

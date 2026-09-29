@@ -43,7 +43,7 @@ export const TopHeader = ({ alertsData, onRefreshAlerts, onNavigate, searchQuery
   }, []);
 
   const totalAlerts = alertsData?.total_alerts || 0;
-  const displayName = user?.name || "Ali";
+  const displayName = user?.name || "Owner";
   const userInitial = displayName.charAt(0).toUpperCase();
 
   return (

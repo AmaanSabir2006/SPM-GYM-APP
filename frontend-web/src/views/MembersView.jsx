@@ -86,6 +86,16 @@ export const MembersView = ({ externalSearchQuery = "", onClearSearch }) => {
     return { label: "BASIC", class: "badge-gym" };
   };
 
+  const getDayWithSuffix = (day) => {
+    if (!day) return "1st";
+    if (day >= 11 && day <= 13) return `${day}th`;
+    const lastDigit = day % 10;
+    if (lastDigit === 1) return `${day}st`;
+    if (lastDigit === 2) return `${day}nd`;
+    if (lastDigit === 3) return `${day}rd`;
+    return `${day}th`;
+  };
+
   return (
     <div>
       {/* Header */}
@@ -229,7 +239,7 @@ export const MembersView = ({ externalSearchQuery = "", onClearSearch }) => {
                     </td>
                     <td>
                       <span style={{ fontWeight: 700, color: "var(--text-muted)", fontSize: "13px" }}>
-                        {m.billing_cycle_day}th
+                        {getDayWithSuffix(m.billing_cycle_day)}
                       </span>
                     </td>
                     <td>

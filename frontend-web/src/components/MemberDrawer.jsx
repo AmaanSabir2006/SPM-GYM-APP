@@ -60,6 +60,16 @@ export const MemberDrawer = ({ member, onClose, onRefresh }) => {
   if (phone.startsWith("03")) {
     phone = "92" + phone.slice(1);
   }
+  const getDayWithSuffix = (day) => {
+    if (!day) return "1st";
+    if (day >= 11 && day <= 13) return `${day}th`;
+    const lastDigit = day % 10;
+    if (lastDigit === 1) return `${day}st`;
+    if (lastDigit === 2) return `${day}nd`;
+    if (lastDigit === 3) return `${day}rd`;
+    return `${day}th`;
+  };
+
   const whatsappUrl = `https://wa.me/${phone}`;
 
   const drawerContent = (
@@ -138,10 +148,10 @@ export const MemberDrawer = ({ member, onClose, onRefresh }) => {
           </div>
           <div>
             <div style={{ color: "var(--text-dim)", fontSize: "11px", textTransform: "uppercase", fontWeight: 700 }}>
-              Billing Cycle
+              Monthly Due Day
             </div>
             <div style={{ fontWeight: 700, color: "var(--text-main)", fontSize: "14px", marginTop: "2px" }}>
-              {member.billing_cycle_day}th of month
+              {getDayWithSuffix(member.billing_cycle_day)} of month
             </div>
           </div>
           <div>

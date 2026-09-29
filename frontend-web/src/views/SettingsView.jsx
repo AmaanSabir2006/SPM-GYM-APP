@@ -242,11 +242,11 @@ export const SettingsView = () => {
             <div className="facility-info-list">
               <div className="facility-info-row">
                 <span className="facility-info-label">Gym Business Name</span>
-                <strong className="facility-info-val">{gym?.name || "Iron Gym"}</strong>
+                <strong className="facility-info-val">{gym?.name || "Your Facility"}</strong>
               </div>
               <div className="facility-info-row">
                 <span className="facility-info-label">Owner Account</span>
-                <span className="facility-info-val">{user?.email || "owner@gymtrack.local"}</span>
+                <span className="facility-info-val">{user?.email || "—"}</span>
               </div>
               <div className="facility-info-row">
                 <span className="facility-info-label">Current Brand Color</span>

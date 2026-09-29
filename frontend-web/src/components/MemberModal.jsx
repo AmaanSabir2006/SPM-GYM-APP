@@ -51,9 +51,21 @@ export const MemberModal = ({ member, onClose, onSuccess }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === "billing_cycle_day") {
+      if (value === "") {
+        setFormData((prev) => ({ ...prev, billing_cycle_day: "" }));
+        return;
+      }
+      let num = parseInt(value, 10);
+      if (isNaN(num)) return;
+      if (num < 1) num = 1;
+      if (num > 31) num = 31;
+      setFormData((prev) => ({ ...prev, billing_cycle_day: num }));
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "monthly_fee" || name === "billing_cycle_day" ? Number(value) : value,
+      [name]: name === "monthly_fee" ? Number(value) : value,
     }));
   };
 
@@ -62,6 +74,12 @@ export const MemberModal = ({ member, onClose, onSuccess }) => {
     const cleanPhone = (formData.phone || "").replace(/\D/g, "");
     if (!cleanPhone || cleanPhone.length < 10) {
       showToast("Please enter a valid athlete mobile or WhatsApp number (minimum 10 digits).", "error");
+      return;
+    }
+
+    const cycleDay = Number(formData.billing_cycle_day);
+    if (!cycleDay || isNaN(cycleDay) || cycleDay < 1 || cycleDay > 31 || !Number.isInteger(cycleDay)) {
+      showToast("Fee Due Day must be a valid day of the month between 1 and 31.", "error");
       return;
     }
 
@@ -197,7 +215,10 @@ export const MemberModal = ({ member, onClose, onSuccess }) => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Billing Cycle Day</label>
+                <label className="form-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>Monthly Fee Due Day</span>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Day 1 – 31</span>
+                </label>
                 <input
                   type="number"
                   name="billing_cycle_day"
@@ -207,9 +228,13 @@ export const MemberModal = ({ member, onClose, onSuccess }) => {
                   onChange={handleChange}
                   required
                   min="1"
-                  max="28"
-                  title="Day of month when fee renews (1 to 28)"
+                  max="31"
+                  step="1"
+                  title="Day of month when fee renews (1 to 31)"
                 />
+                <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+                  Day of month fee renews (1 to 31). Auto-adjusts for shorter months (Feb/Sep).
+                </div>
               </div>
             </div>
 
