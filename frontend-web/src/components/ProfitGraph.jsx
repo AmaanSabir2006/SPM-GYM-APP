@@ -1,318 +1,501 @@
-import React, { useState } from "react";
-import { TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, Layers, PieChart } from "lucide-react";
+import React, { useState, useMemo } from "react";
 
 export const ProfitGraph = ({ analyticsData }) => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
-  if (!analyticsData || !analyticsData.monthly_trend) return null;
+  // Safe fallback extractions
+  const trend = useMemo(() => analyticsData?.monthly_trend || [], [analyticsData]);
 
-  const trend = analyticsData.monthly_trend;
-  const isIncrease = analyticsData.is_profit_increase;
-  const growthPercent = analyticsData.profit_growth_percent;
+  // Compute 6-Month Aggregate Metrics
+  const totals = useMemo(() => {
+    let rev = 0;
+    let exp = 0;
+    let profit = 0;
+    trend.forEach((d) => {
+      rev += d.revenue || 0;
+      exp += d.expenses || 0;
+      profit += d.net_profit || 0;
+    });
+    const avgMargin = rev > 0 ? Math.round((profit / rev) * 100) : 0;
+    return { rev, exp, profit, avgMargin };
+  }, [trend]);
 
-  // Compute scale max for SVG charting
-  const allValues = trend.flatMap((d) => [d.revenue, d.expenses, Math.abs(d.net_profit)]);
-  const maxValue = Math.max(...allValues, 10000) * 1.15;
+  // Compute dynamic scale max for SVG charting based on the highest value across Income, Expenses, and Profit
+  const rawMax = useMemo(() => {
+    if (!trend.length) return 5000;
+    const allValues = trend.flatMap((d) => [
+      d.revenue || 0,
+      d.expenses || 0,
+      Math.max(0, d.net_profit || 0)
+    ]);
+    return Math.max(...allValues, 0);
+  }, [trend]);
 
-  // Chart dimensions
-  const chartHeight = 220;
-  const chartWidth = 560;
-  const paddingX = 45;
-  const paddingY = 30;
+  const maxValue = useMemo(() => {
+    if (rawMax <= 0) return 5000;
+    if (rawMax <= 1500) return 2000;
+    if (rawMax <= 3500) return 5000;
+    if (rawMax <= 7500) return 10000;
+    if (rawMax <= 18000) return 25000;
+    if (rawMax <= 38000) return 50000;
+    if (rawMax <= 75000) return 100000;
+    if (rawMax <= 160000) return 200000;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(rawMax)));
+    return Math.ceil((rawMax * 1.2) / magnitude) * magnitude;
+  }, [rawMax]);
+
+  // Chart dimensions & coordinates
+  const chartHeight = 240;
+  const chartWidth = 640;
+  const paddingX = 46;
+  const paddingY = 28;
   const effectiveWidth = chartWidth - paddingX * 2;
   const effectiveHeight = chartHeight - paddingY * 2;
+  const bottomY = chartHeight - paddingY;
 
-  const getX = (index) => paddingX + (index / (trend.length - 1 || 1)) * effectiveWidth;
-  const getY = (val) => chartHeight - paddingY - (Math.max(0, val) / maxValue) * effectiveHeight;
+  const getX = (index) => paddingX + (index / Math.max(1, trend.length - 1)) * effectiveWidth;
+  const getY = (val) => bottomY - (Math.max(0, val) / maxValue) * effectiveHeight;
 
-  // Generate SVG path for Net Profit line
-  const profitPoints = trend.map((d, i) => `${getX(i)},${getY(d.net_profit)}`).join(" ");
+  // Points for 3 distinct lines: Income (Green), Expenses (Red), Net Profit (Blue)
+  const incomeCoords = useMemo(() => {
+    return trend.map((d, i) => ({
+      x: getX(i),
+      y: getY(d.revenue || 0),
+      val: d.revenue || 0
+    }));
+  }, [trend, maxValue, bottomY, effectiveWidth]);
 
-  // Generate Area Fill under Profit Line
-  const areaPath = trend.length > 0 
-    ? `M ${getX(0)},${chartHeight - paddingY} ` +
-      trend.map((d, i) => `L ${getX(i)},${getY(d.net_profit)}`).join(" ") +
-      ` L ${getX(trend.length - 1)},${chartHeight - paddingY} Z`
-    : "";
+  const expenseCoords = useMemo(() => {
+    return trend.map((d, i) => ({
+      x: getX(i),
+      y: getY(d.expenses || 0),
+      val: d.expenses || 0
+    }));
+  }, [trend, maxValue, bottomY, effectiveWidth]);
+
+  const profitCoords = useMemo(() => {
+    return trend.map((d, i) => ({
+      x: getX(i),
+      y: getY(d.net_profit || 0),
+      val: d.net_profit || 0
+    }));
+  }, [trend, maxValue, bottomY, effectiveWidth]);
+
+  // Reusable Catmull-Rom to Cubic Bezier curve path generator
+  const generateSmoothPath = (coords) => {
+    if (!coords || coords.length === 0) return "";
+    if (coords.length === 1) return `M ${coords[0].x},${coords[0].y}`;
+
+    let path = `M ${coords[0].x.toFixed(1)},${coords[0].y.toFixed(1)}`;
+    for (let i = 0; i < coords.length - 1; i++) {
+      const p0 = i === 0 ? coords[i] : coords[i - 1];
+      const p1 = coords[i];
+      const p2 = coords[i + 1];
+      const p3 = i + 2 < coords.length ? coords[i + 2] : p2;
+
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+      path += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+    }
+    return path;
+  };
+
+  const incomePath = useMemo(() => generateSmoothPath(incomeCoords), [incomeCoords]);
+  const expensePath = useMemo(() => generateSmoothPath(expenseCoords), [expenseCoords]);
+  const profitPath = useMemo(() => generateSmoothPath(profitCoords), [profitCoords]);
+
+  // Ambient gradient area under the Net Profit curve
+  const profitAreaPath = useMemo(() => {
+    if (!profitPath || profitCoords.length === 0) return "";
+    const lastX = profitCoords[profitCoords.length - 1].x.toFixed(1);
+    const firstX = profitCoords[0].x.toFixed(1);
+    return `${profitPath} L ${lastX},${bottomY} L ${firstX},${bottomY} Z`;
+  }, [profitPath, profitCoords, bottomY]);
+
+  // Selected or active hovered month details
+  const activeTooltipData = hoveredIndex !== null && trend[hoveredIndex] ? trend[hoveredIndex] : null;
+
+  // Safe render guard AFTER all hooks are evaluated
+  if (!analyticsData || trend.length === 0) {
+    return (
+      <div className="profit-trajectory-card" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "360px" }}>
+        <div style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "13px" }}>
+          <p style={{ fontWeight: 600, marginBottom: "4px" }}>Loading Financial Trajectory...</p>
+          <p style={{ fontSize: "11px", opacity: 0.7 }}>Preparing net profit analytics & cash dynamics</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="glass-card" style={{ padding: "26px" }}>
-      {/* Header with Growth Badge */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "22px", flexWrap: "wrap", gap: "14px" }}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
-            <span className="athletic-badge badge-pro">
-              <span>FINANCIAL PERFORMANCE</span>
-            </span>
-            <span style={{ fontSize: "12.5px", color: "var(--text-muted)", fontWeight: 700 }}>
-              6-MONTH REVENUE VS. EXPENSES VS. NET PROFIT
-            </span>
-          </div>
-          <h3 style={{ fontSize: "22px", fontWeight: 800 }}>Net Profit & Cash Flow Trajectory</h3>
+    <div className="profit-trajectory-card">
+      {/* 1. Header: Clean Title & 3-Color Line Legend */}
+      <div className="profit-card-header">
+        <div className="profit-header-left">
+          <h3 className="profit-title">Net Profit & Cash Flow Trajectory</h3>
+          <p className="profit-subtitle">
+            6-Month financial trajectory • Income, Expenses & Net Profit
+          </p>
         </div>
 
-        {/* Dynamic Profit Increase / Decrease Banner */}
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "8px 16px",
-            borderRadius: "30px",
-            background: isIncrease ? "var(--color-success-bg)" : "var(--color-danger-bg)",
-            border: `1px solid ${isIncrease ? "var(--color-success-border)" : "var(--color-danger-border)"}`,
-            color: isIncrease ? "var(--color-success)" : "var(--color-danger)",
-            fontWeight: 800,
-            fontSize: "13px",
-            fontFamily: "var(--font-athletic)",
-            letterSpacing: "0.03em",
-          }}
-        >
-          {isIncrease ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
-          <span>
-            {isIncrease ? "PROFIT INCREASE" : "PROFIT DECREASE"} : {growthPercent > 0 ? `+${growthPercent}%` : `${growthPercent}%`} VS LAST MONTH
-          </span>
+        {/* 3-Color Line Legend */}
+        <div className="profit-chart-legend">
+          <div className="profit-legend-item">
+            <span className="profit-legend-line" style={{ background: "#10B981" }} />
+            <span>Income</span>
+          </div>
+          <div className="profit-legend-item">
+            <span className="profit-legend-line" style={{ background: "#EF4444" }} />
+            <span>Expenses</span>
+          </div>
+          <div className="profit-legend-item">
+            <span className="profit-legend-line" style={{ background: "#3B82F6" }} />
+            <span>Net Profit</span>
+          </div>
         </div>
       </div>
 
-      {/* Main Grid: Chart + Category Breakdown */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "24px", alignItems: "center" }}>
-        {/* SVG Chart Container */}
-        <div style={{ position: "relative" }}>
-          {/* Legend */}
-          <div style={{ display: "flex", gap: "18px", marginBottom: "12px", fontSize: "12px", fontWeight: 700 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ width: 12, height: 12, borderRadius: 3, background: "#059669" }} />
-              <span style={{ color: "var(--text-main)" }}>Fee Revenue</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ width: 12, height: 12, borderRadius: 3, background: "#EF4444" }} />
-              <span style={{ color: "var(--text-main)" }}>Expenses</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ width: 12, height: 4, borderRadius: 2, background: "var(--primary)" }} />
-              <span style={{ color: "var(--primary)" }}>Net Profit Line</span>
-            </div>
+      {/* 2. Unified 3-Segment Quick KPI Bar */}
+      <div className="profit-kpi-bar">
+        <div className="profit-kpi-item">
+          <div className="profit-kpi-meta">
+            <span className="profit-kpi-dot green" />
+            <span>Total Fee Income</span>
           </div>
+          <div className="profit-kpi-val green">
+            Rs. {totals.rev.toLocaleString()}
+          </div>
+        </div>
 
-          <div style={{ width: "100%", overflowX: "auto" }}>
-            <svg
-              viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-              style={{ width: "100%", height: "auto", overflow: "visible" }}
-            >
-              <defs>
-                <linearGradient id="profitAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.0" />
-                </linearGradient>
-                <linearGradient id="revBarGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10B981" />
-                  <stop offset="100%" stopColor="#059669" />
-                </linearGradient>
-                <linearGradient id="expBarGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#F87171" />
-                  <stop offset="100%" stopColor="#DC2626" />
-                </linearGradient>
-              </defs>
+        <div className="profit-kpi-separator" />
 
-              {/* Grid Lines */}
-              {[0, 0.25, 0.5, 0.75, 1].map((pct, idx) => {
-                const y = chartHeight - paddingY - pct * effectiveHeight;
-                return (
-                  <g key={idx}>
-                    <line
-                      x1={paddingX - 10}
-                      y1={y}
-                      x2={chartWidth - paddingX + 10}
-                      y2={y}
-                      stroke="var(--border-subtle)"
-                      strokeDasharray="4 4"
-                    />
-                    <text
-                      x={paddingX - 16}
-                      y={y + 4}
-                      fill="var(--text-dim)"
-                      fontSize="9"
-                      textAnchor="end"
-                      fontWeight="600"
-                    >
-                      {Math.round((pct * maxValue) / 1000)}k
-                    </text>
-                  </g>
-                );
-              })}
+        <div className="profit-kpi-item">
+          <div className="profit-kpi-meta">
+            <span className="profit-kpi-dot red" />
+            <span>Facility Overhead</span>
+          </div>
+          <div className="profit-kpi-val red">
+            Rs. {totals.exp.toLocaleString()}
+          </div>
+        </div>
 
-              {/* Bar Columns for Revenue & Expenses */}
-              {trend.map((d, i) => {
-                const cx = getX(i);
-                const barWidth = 14;
-                const revHeight = (Math.max(0, d.revenue) / maxValue) * effectiveHeight;
-                const expHeight = (Math.max(0, d.expenses) / maxValue) * effectiveHeight;
-                const isHovered = hoveredIndex === i;
+        <div className="profit-kpi-separator" />
 
-                return (
-                  <g key={i} onMouseEnter={() => setHoveredIndex(i)} onMouseLeave={() => setHoveredIndex(null)}>
-                    {/* Revenue Bar */}
-                    <rect
-                      x={cx - barWidth - 2}
-                      y={chartHeight - paddingY - revHeight}
-                      width={barWidth}
-                      height={revHeight}
-                      rx="3"
-                      fill="url(#revBarGrad)"
-                      opacity={isHovered ? 1 : 0.85}
-                    />
-                    {/* Expense Bar */}
-                    <rect
-                      x={cx + 2}
-                      y={chartHeight - paddingY - expHeight}
-                      width={barWidth}
-                      height={expHeight}
-                      rx="3"
-                      fill="url(#expBarGrad)"
-                      opacity={isHovered ? 1 : 0.85}
-                    />
-                    {/* Month Label */}
-                    <text
-                      x={cx}
-                      y={chartHeight - paddingY + 18}
-                      fill={isHovered ? "var(--text-main)" : "var(--text-muted)"}
-                      fontSize="10"
-                      textAnchor="middle"
-                      fontWeight={isHovered ? "800" : "600"}
-                      fontFamily="var(--font-athletic)"
-                    >
-                      {d.month_label}
-                    </text>
-                  </g>
-                );
-              })}
+        <div className="profit-kpi-item">
+          <div className="profit-kpi-meta">
+            <span className="profit-kpi-dot blue" />
+            <span>Net Retained Margin</span>
+          </div>
+          <div className="profit-kpi-val blue">
+            {totals.avgMargin}% ({totals.profit >= 0 ? `+Rs. ${totals.profit.toLocaleString()}` : `-Rs. ${Math.abs(totals.profit).toLocaleString()}`})
+          </div>
+        </div>
+      </div>
 
-              {/* Area Fill under Net Profit Line */}
-              {areaPath && <path d={areaPath} fill="url(#profitAreaGrad)" />}
+      {/* 3. The Unified Multi-Line Vector Chart */}
+      <div className="profit-chart-wrapper">
+        <div style={{ width: "100%", overflowX: "auto" }}>
+          <svg
+            viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+            className="profit-chart-svg"
+          >
+            <defs>
+              {/* Spline Ambient Glow Filter for Blue Net Profit */}
+              <filter id="profitGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#3B82F6" floodOpacity="0.4" />
+              </filter>
 
-              {/* Connected Net Profit Line */}
-              <polyline
-                points={profitPoints}
+              {/* Spline Ambient Glow Filter for Green Income */}
+              <filter id="incomeGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#10B981" floodOpacity="0.35" />
+              </filter>
+
+              {/* Spline Ambient Glow Filter for Red Expenses */}
+              <filter id="expenseGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#EF4444" floodOpacity="0.35" />
+              </filter>
+
+              {/* Area Gradient under Net Profit Curve */}
+              <linearGradient id="profitAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.22" />
+                <stop offset="60%" stopColor="#3B82F6" stopOpacity="0.05" />
+                <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
+              </linearGradient>
+            </defs>
+
+            {/* Horizontal Grid Baseline & Dynamic Value Scales */}
+            {[0, 0.25, 0.5, 0.75, 1].map((pct, idx) => {
+              const y = bottomY - pct * effectiveHeight;
+              const val = Math.round(pct * maxValue);
+              const valLabel = val >= 1000 ? `${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 1)}k` : `${val}`;
+              return (
+                <g key={idx}>
+                  <line
+                    x1={paddingX - 10}
+                    y1={y}
+                    x2={chartWidth - paddingX + 10}
+                    y2={y}
+                    stroke="var(--border-subtle)"
+                    strokeDasharray="4 4"
+                    strokeOpacity="0.7"
+                  />
+                  <text
+                    x={paddingX - 14}
+                    y={y + 3.5}
+                    fill="var(--text-muted)"
+                    fontSize="9.5"
+                    textAnchor="end"
+                    fontWeight="600"
+                    fontFamily="var(--font-body)"
+                  >
+                    {valLabel}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Hover Column Background Highlight & Crosshair Guide */}
+            {trend.map((d, i) => {
+              const cx = getX(i);
+              const isHovered = hoveredIndex === i;
+
+              return (
+                <g key={`track-${i}`}>
+                  {/* Invisible hit area for comfortable hover interaction */}
+                  <rect
+                    x={cx - 30}
+                    y={paddingY}
+                    width={60}
+                    height={effectiveHeight}
+                    fill="transparent"
+                    onMouseEnter={() => setHoveredIndex(i)}
+                    onMouseLeave={() => setHoveredIndex(null)}
+                    style={{ cursor: "pointer" }}
+                  />
+
+                  {/* Vertical Crosshair Guideline on Hover */}
+                  {isHovered && (
+                    <>
+                      <rect
+                        x={cx - 20}
+                        y={paddingY}
+                        width={40}
+                        height={effectiveHeight}
+                        rx="6"
+                        fill="var(--primary)"
+                        opacity="0.06"
+                        pointerEvents="none"
+                      />
+                      <line
+                        x1={cx}
+                        y1={paddingY}
+                        x2={cx}
+                        y2={bottomY}
+                        stroke="var(--primary)"
+                        strokeDasharray="3 3"
+                        strokeWidth="1.5"
+                        strokeOpacity="0.6"
+                        pointerEvents="none"
+                      />
+                    </>
+                  )}
+                </g>
+              );
+            })}
+
+            {/* Area Gradient under Profit Curve */}
+            {profitAreaPath && (
+              <path
+                d={profitAreaPath}
+                fill="url(#profitAreaGradient)"
+                pointerEvents="none"
+              />
+            )}
+
+            {/* Line 1: Fee Income (Emerald Green) */}
+            {incomePath && (
+              <path
+                d={incomePath}
                 fill="none"
-                stroke="var(--primary)"
-                strokeWidth="3.5"
+                stroke="#10B981"
+                strokeWidth="3.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                filter="url(#incomeGlow)"
+                pointerEvents="none"
               />
+            )}
 
-              {/* Points for Net Profit */}
-              {trend.map((d, i) => {
-                const cx = getX(i);
-                const cy = getY(d.net_profit);
-                const isHovered = hoveredIndex === i;
+            {/* Line 2: Overhead Expenses (Coral Red) */}
+            {expensePath && (
+              <path
+                d={expensePath}
+                fill="none"
+                stroke="#EF4444"
+                strokeWidth="3.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="url(#expenseGlow)"
+                pointerEvents="none"
+              />
+            )}
 
-                return (
-                  <g key={i} onMouseEnter={() => setHoveredIndex(i)} onMouseLeave={() => setHoveredIndex(null)} style={{ cursor: "pointer" }}>
-                    <circle
-                      cx={cx}
-                      cy={cy}
-                      r={isHovered ? "7" : "5"}
-                      fill="white"
-                      stroke="var(--primary)"
-                      strokeWidth={isHovered ? "3.5" : "2.5"}
-                      style={{ transition: "all 0.15s" }}
-                    />
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
+            {/* Line 3: Net Profit (Electric Royal Blue) */}
+            {profitPath && (
+              <path
+                d={profitPath}
+                fill="none"
+                stroke="#3B82F6"
+                strokeWidth="3.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="url(#profitGlow)"
+                pointerEvents="none"
+              />
+            )}
 
-          {/* Interactive Floating Tooltip */}
-          {hoveredIndex !== null && trend[hoveredIndex] && (
-            <div
-              style={{
-                position: "absolute",
-                top: "10px",
-                right: "10px",
-                background: "var(--bg-card)",
-                border: "1px solid var(--border-medium)",
-                borderRadius: "var(--radius-md)",
-                padding: "12px 16px",
-                boxShadow: "var(--shadow-lg)",
-                fontSize: "12px",
-                zIndex: 20,
-                minWidth: "190px",
-                animation: "scale-up 0.15s cubic-bezier(0.16, 1, 0.3, 1)",
-              }}
-            >
-              <div style={{ fontWeight: 800, fontSize: "13px", marginBottom: "6px", color: "var(--text-main)" }}>
-                {trend[hoveredIndex].month_label} Performance
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
-                <span style={{ color: "var(--text-muted)" }}>Collected Fees:</span>
-                <span style={{ fontWeight: 700, color: "var(--color-success)" }}>
-                  Rs. {trend[hoveredIndex].revenue.toLocaleString()}
-                </span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
-                <span style={{ color: "var(--text-muted)" }}>Total Expenses:</span>
-                <span style={{ fontWeight: 700, color: "var(--color-danger)" }}>
-                  Rs. {trend[hoveredIndex].expenses.toLocaleString()}
-                </span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid var(--border-subtle)", paddingTop: "5px", marginTop: "4px" }}>
-                <span style={{ fontWeight: 800, color: "var(--text-main)" }}>Net Profit:</span>
-                <span style={{ fontWeight: 900, color: trend[hoveredIndex].net_profit >= 0 ? "var(--primary)" : "var(--color-danger)" }}>
-                  Rs. {trend[hoveredIndex].net_profit.toLocaleString()}
-                </span>
-              </div>
-            </div>
-          )}
+            {/* Data Point Circles on all 3 lines */}
+            {trend.map((d, i) => {
+              const inc = incomeCoords[i];
+              const exp = expenseCoords[i];
+              const pro = profitCoords[i];
+              const isHovered = hoveredIndex === i;
+
+              return (
+                <g 
+                  key={`points-${i}`}
+                  onMouseEnter={() => setHoveredIndex(i)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  style={{ cursor: "pointer" }}
+                >
+                  {/* Income Point (Green) */}
+                  {isHovered && (
+                    <circle cx={inc.x} cy={inc.y} r="10" fill="#10B981" opacity="0.25" pointerEvents="none" />
+                  )}
+                  <circle
+                    cx={inc.x}
+                    cy={inc.y}
+                    r={isHovered ? "5.5" : "3.5"}
+                    fill="#FFFFFF"
+                    stroke="#10B981"
+                    strokeWidth={isHovered ? "3" : "2"}
+                    style={{ transition: "all 0.15s ease" }}
+                  />
+
+                  {/* Expense Point (Red) */}
+                  {isHovered && (
+                    <circle cx={exp.x} cy={exp.y} r="10" fill="#EF4444" opacity="0.25" pointerEvents="none" />
+                  )}
+                  <circle
+                    cx={exp.x}
+                    cy={exp.y}
+                    r={isHovered ? "5.5" : "3.5"}
+                    fill="#FFFFFF"
+                    stroke="#EF4444"
+                    strokeWidth={isHovered ? "3" : "2"}
+                    style={{ transition: "all 0.15s ease" }}
+                  />
+
+                  {/* Net Profit Point (Blue) */}
+                  {isHovered && (
+                    <circle cx={pro.x} cy={pro.y} r="11" fill="#3B82F6" opacity="0.3" pointerEvents="none" />
+                  )}
+                  <circle
+                    cx={pro.x}
+                    cy={pro.y}
+                    r={isHovered ? "6" : "4"}
+                    fill="#FFFFFF"
+                    stroke="#3B82F6"
+                    strokeWidth={isHovered ? "3" : "2.5"}
+                    style={{ transition: "all 0.15s ease" }}
+                  />
+                </g>
+              );
+            })}
+
+            {/* X-Axis Month Labels */}
+            {trend.map((d, i) => {
+              const cx = getX(i);
+              const isHovered = hoveredIndex === i;
+
+              return (
+                <text
+                  key={`label-${i}`}
+                  x={cx}
+                  y={bottomY + 18}
+                  fill={isHovered ? "var(--text-main)" : "var(--text-muted)"}
+                  fontSize="11"
+                  textAnchor="middle"
+                  fontWeight={isHovered ? "800" : "600"}
+                  fontFamily="var(--font-athletic)"
+                  letterSpacing="0.03em"
+                >
+                  {d.month_label}
+                </text>
+              );
+            })}
+          </svg>
         </div>
 
-        {/* Right Side: Category Breakdown Meters */}
-        <div style={{ background: "var(--bg-surface)", padding: "18px 20px", borderRadius: "var(--radius-md)", border: "1px solid var(--border-subtle)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-            <h4 style={{ fontSize: "14px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-athletic)" }}>
-              Current Month Expense Distribution
-            </h4>
-          </div>
-
-          {analyticsData.category_breakdown.length === 0 ? (
-            <div style={{ color: "var(--text-muted)", fontSize: "12.5px", padding: "16px 0", textAlign: "center" }}>
-              No expenses recorded this month yet. Click "Log Expense" to track rent, bills, or repairs.
+        {/* Floating Tooltip displaying all 3 values for the hovered month */}
+        {activeTooltipData && (
+          <div className="profit-tooltip-card">
+            <div className="profit-tooltip-header">
+              <span>{activeTooltipData.month_label} Breakdown</span>
+              <span style={{ 
+                fontSize: "10.5px", 
+                padding: "2px 7px", 
+                borderRadius: "5px",
+                background: (activeTooltipData.net_profit || 0) >= 0 ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
+                color: (activeTooltipData.net_profit || 0) >= 0 ? "#10B981" : "#EF4444",
+                fontWeight: 800
+              }}>
+                {(activeTooltipData.net_profit || 0) >= 0 ? "Profitable" : "Deficit"}
+              </span>
             </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {analyticsData.category_breakdown.map((cat, idx) => (
-                <div key={idx}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "4px" }}>
-                    <span style={{ fontWeight: 700, textTransform: "capitalize", color: "var(--text-main)" }}>
-                      {cat.category}
-                    </span>
-                    <span style={{ fontWeight: 600, color: "var(--text-muted)" }}>
-                      Rs. {cat.amount.toLocaleString()} ({cat.percentage}%)
-                    </span>
-                  </div>
-                  <div style={{ height: "6px", background: "var(--border-subtle)", borderRadius: "3px", overflow: "hidden" }}>
-                    <div
-                      style={{
-                        width: `${cat.percentage}%`,
-                        height: "100%",
-                        background: idx === 0 ? "var(--color-danger)" : idx === 1 ? "var(--color-warning)" : "var(--primary)",
-                        borderRadius: "3px",
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
 
-          <div style={{ borderTop: "1px solid var(--border-subtle)", marginTop: "16px", paddingTop: "12px", display: "flex", justifyContent: "space-between", fontSize: "12.5px" }}>
-            <span style={{ color: "var(--text-muted)", fontWeight: 600 }}>Total Monthly Overhead:</span>
-            <span style={{ fontWeight: 800, color: "var(--color-danger)" }}>
-              Rs. {analyticsData.total_expenses.toLocaleString()}
-            </span>
+            {/* 1. Income (Green) */}
+            <div className="profit-tooltip-row">
+              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981" }} />
+                Income (Fees):
+              </span>
+              <strong style={{ color: "#10B981" }}>
+                Rs. {(activeTooltipData.revenue || 0).toLocaleString()}
+              </strong>
+            </div>
+
+            {/* 2. Expenses (Red) */}
+            <div className="profit-tooltip-row">
+              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#EF4444" }} />
+                Expenses:
+              </span>
+              <strong style={{ color: "#EF4444" }}>
+                Rs. {(activeTooltipData.expenses || 0).toLocaleString()}
+              </strong>
+            </div>
+
+            {/* 3. Net Retained Profit (Blue) */}
+            <div className="profit-tooltip-divider">
+              <div className="profit-tooltip-row">
+                <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 800, color: "var(--text-main)" }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#3B82F6" }} />
+                  Net Profit:
+                </span>
+                <strong style={{ 
+                  color: (activeTooltipData.net_profit || 0) >= 0 ? "#3B82F6" : "#EF4444",
+                  fontSize: "13.5px"
+                }}>
+                  Rs. {(activeTooltipData.net_profit || 0).toLocaleString()}
+                </strong>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

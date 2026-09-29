@@ -112,41 +112,15 @@ export const FeesView = ({ onRefreshAlerts }) => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "18px",
-          background: "var(--bg-card)",
-          padding: "14px 18px",
-          borderRadius: "var(--radius-md)",
-          border: "1px solid var(--border-subtle)",
-          flexWrap: "wrap",
-          gap: "14px",
-          boxShadow: "var(--shadow-sm)",
-        }}
-      >
+      {/* Filter and Search Bar */}
+      <div className="filter-bar">
         {/* Status Filter Tabs */}
-        <div style={{ display: "flex", gap: "6px" }}>
+        <div className="filter-tab-group">
           {["all", "overdue", "unpaid", "paid"].map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              style={{
-                padding: "6px 14px",
-                borderRadius: "var(--radius-sm)",
-                fontSize: "12.5px",
-                fontWeight: 700,
-                cursor: "pointer",
-                border: "none",
-                background: statusFilter === status ? "var(--primary)" : "var(--bg-surface)",
-                color: statusFilter === status ? "white" : "var(--text-muted)",
-                transition: "all 0.15s",
-                textTransform: "uppercase",
-                fontFamily: "var(--font-athletic)",
-                letterSpacing: "0.05em",
-              }}
+              className={`filter-tab-btn ${statusFilter === status ? "active" : ""}`}
             >
               {status}
             </button>
@@ -154,12 +128,11 @@ export const FeesView = ({ onRefreshAlerts }) => {
         </div>
 
         {/* Search */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", maxWidth: "300px", width: "100%" }}>
-          <Search size={16} color="var(--text-dim)" />
+        <div className="search-input-wrapper">
+          <Search size={16} className="search-icon" />
           <input
             type="text"
             className="form-input"
-            style={{ padding: "8px 12px", fontSize: "13px" }}
             placeholder="Search athlete or phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

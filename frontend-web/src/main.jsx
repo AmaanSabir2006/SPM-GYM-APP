@@ -4,7 +4,7 @@ import './index.css'
 import App from './App.jsx'
 
 // Initialize theme immediately on bootstrap to prevent light/dark flash
-const savedTheme = localStorage.getItem("gymtrack_theme") || "light";
+const savedTheme = localStorage.getItem("gymtrack_theme") || "dark";
 document.documentElement.setAttribute("data-theme", savedTheme);
 
 createRoot(document.getElementById('root')).render(
