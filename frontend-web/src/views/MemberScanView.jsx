@@ -64,6 +64,7 @@ export const MemberScanView = () => {
   const [availableCameras, setAvailableCameras] = useState([]);
   const [selectedCameraId, setSelectedCameraId] = useState(null);
 
+  const scanLockRef = useRef(false);
   const html5QrCodeRef = useRef(null);
   const scannerContainerId = "member-camera-viewport";
 
@@ -189,6 +190,7 @@ export const MemberScanView = () => {
 
   // 3. Initialize Camera Scanning with html5-qrcode
   const startScanner = async () => {
+    scanLockRef.current = false;
     setCameraError(null);
     setScanResult(null);
 
@@ -257,7 +259,8 @@ export const MemberScanView = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (submitting) return;
+    if (scanLockRef.current) return;
+    scanLockRef.current = true;
     setSubmitting(true);
     setCameraError(null);
 
@@ -306,8 +309,9 @@ export const MemberScanView = () => {
 
   // 4. Handle QR Verification and Check-in
   const handleQrCodeScanned = async (rawCode) => {
-    // Prevent duplicate triggers
-    if (submitting) return;
+    // Prevent duplicate rapid-fire triggers synchronously
+    if (scanLockRef.current) return;
+    scanLockRef.current = true;
     setSubmitting(true);
 
     // Stop camera to freeze frame
@@ -350,7 +354,16 @@ export const MemberScanView = () => {
     } catch (err) {
       console.error("Check-in error:", err);
       playAccessChime("error");
-      const detail = err.response?.data?.detail || "Check-in failed. Please verify the gym QR poster.";
+      let detail = "Check-in failed. Please verify the gym QR poster.";
+      if (err.response?.data?.detail) {
+        if (typeof err.response.data.detail === "string") {
+          detail = err.response.data.detail;
+        } else if (Array.isArray(err.response.data.detail)) {
+          detail = err.response.data.detail.map((d) => d.msg || JSON.stringify(d)).join(", ");
+        }
+      } else if (err.response?.status === 500) {
+        detail = "Server error processing check-in. Please try again.";
+      }
       setScanResult({
         success: false,
         message: detail,
@@ -364,6 +377,7 @@ export const MemberScanView = () => {
   // Quick test check-in with gym token (for laptop or without camera)
   const handleQuickTestEntrance = () => {
     if (passInfo?.gym_qr_token) {
+      scanLockRef.current = false;
       handleQrCodeScanned(passInfo.gym_qr_token);
     }
   };
@@ -851,6 +865,7 @@ export const MemberScanView = () => {
                 type="button"
                 className="btn btn-secondary btn-sm"
                 onClick={() => {
+                  scanLockRef.current = false;
                   setScanResult(null);
                   startScanner();
                 }}

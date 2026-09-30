@@ -46,11 +46,13 @@ async def qr_check_in(
         )
 
     # 2. Find Member linked to this member pass token or user or passed member_id
-    member_id = check_in.member_id
-    if not member_id:
-        if token_payload.role == "member":
-            member_id = token_payload.sub
-        else:
+    if token_payload.role == "member":
+        # Regular members can ONLY check in themselves (prevents BOLA / IDOR)
+        member_id = token_payload.sub
+    else:
+        # Staff/admin front desk can check in a specified member or themselves
+        member_id = check_in.member_id or token_payload.sub
+        if not check_in.member_id:
             member_res = await db.execute(
                 select(Member).where(Member.user_id == token_payload.sub, Member.gym_id == gym_id)
             )
@@ -72,13 +74,15 @@ async def qr_check_in(
     # 3. Check for duplicate check-ins within last 5 minutes
     five_mins_ago = datetime.now(timezone.utc) - timedelta(minutes=5)
     dup_res = await db.execute(
-        select(AttendanceRecord).where(
+        select(AttendanceRecord)
+        .where(
             AttendanceRecord.gym_id == gym_id,
             AttendanceRecord.member_id == member_id,
             AttendanceRecord.check_in_time >= five_mins_ago,
         )
+        .limit(1)
     )
-    if dup_res.scalar_one_or_none():
+    if dup_res.scalars().first():
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="You have already checked in recently. Please wait a few minutes before scanning again.",
