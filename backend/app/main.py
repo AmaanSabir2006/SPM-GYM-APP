@@ -10,10 +10,13 @@ from app.core.database import Base, engine
 async def lifespan(app: FastAPI):
     """
     Application lifespan handler.
-    Initializes database tables on startup.
+    Initializes database tables on startup (with graceful fallback for serverless).
     """
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    except Exception as e:
+        print(f"Database initialization notice: {e}")
     yield
 
 
@@ -46,12 +49,24 @@ import socket
 def get_lan_ip() -> str:
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(0.5)
         s.connect(("8.8.8.8", 80))
         ip = s.getsockname()[0]
         s.close()
         return ip
     except Exception:
         return "127.0.0.1"
+
+
+@app.get("/", tags=["Root"])
+async def root():
+    """Root endpoint for Vercel deployment health confirmation."""
+    return {
+        "status": "online",
+        "service": settings.PROJECT_NAME,
+        "docs": "/docs",
+        "health": "/api/health",
+    }
 
 
 @app.get("/api/health", tags=["Health"])
