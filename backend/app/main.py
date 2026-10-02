@@ -20,35 +20,6 @@ async def lifespan(app: FastAPI):
     yield
 
 
-from starlette.types import ASGIApp, Scope, Receive, Send
-
-class VercelPathCorrectionMiddleware:
-    """
-    Restores the original request path on Vercel serverless deployments.
-    When Vercel uses rewrites like /(.*) -> /api/index.py, the ASGI scope['path']
-    can be set to the rewrite destination. This middleware inspects Vercel's
-    'x-matched-path' header to restore the true request path for FastAPI routing.
-    """
-    def __init__(self, app: ASGIApp):
-        self.app = app
-
-    async def __call__(self, scope: Scope, receive: Receive, send: Send):
-        if scope["type"] == "http":
-            for key, val in scope.get("headers", []):
-                if key.lower() == b"x-matched-path":
-                    try:
-                        matched = val.decode("latin-1").split("?")[0]
-                        if matched:
-                            scope["path"] = matched
-                    except Exception:
-                        pass
-                    break
-            else:
-                if scope.get("path") in ("/api/index.py", "/api/index", "/api/index.py/"):
-                    scope["path"] = "/"
-        await self.app(scope, receive, send)
-
-
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Multi-Tenant Gym Management SaaS API for fee recovery and contactless QR entrance attendance.",
@@ -58,9 +29,6 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan,
 )
-
-# Fix Vercel path rewriting
-app.add_middleware(VercelPathCorrectionMiddleware)
 
 # Set up CORS middleware for Web, Mobile and local LAN clients
 app.add_middleware(
