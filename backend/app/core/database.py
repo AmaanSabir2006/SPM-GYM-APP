@@ -3,12 +3,24 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.orm import declarative_base
 from app.core.config import settings
 
-# Create async engine for PostgreSQL (or sqlite fallback)
+# Create async engine with serverless and Supabase pooler compatibility
+engine_kwargs = {
+    "echo": (settings.ENVIRONMENT == "development"),
+    "future": True,
+    "pool_pre_ping": True,
+}
+
+if settings.DATABASE_URL.startswith("postgresql"):
+    from sqlalchemy.pool import NullPool
+    engine_kwargs["connect_args"] = {
+        "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0,
+    }
+    engine_kwargs["poolclass"] = NullPool
+
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=(settings.ENVIRONMENT == "development"),
-    future=True,
-    pool_pre_ping=True,
+    **engine_kwargs
 )
 
 AsyncSessionLocal = async_sessionmaker(
