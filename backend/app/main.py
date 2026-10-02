@@ -70,6 +70,13 @@ async def global_exception_handler(request: Request, exc: Exception):
 async def test_db(init: bool = False):
     """Diagnostic endpoint to verify database connectivity and table schema."""
     from sqlalchemy import text
+    
+    masked_db = settings.DATABASE_URL
+    if "@" in settings.DATABASE_URL:
+        scheme_and_auth, host_part = settings.DATABASE_URL.split("@", 1)
+        scheme = scheme_and_auth.split("://")[0] if "://" in scheme_and_auth else "db"
+        masked_db = f"{scheme}://***:***@{host_part}"
+
     try:
         async with engine.begin() as conn:
             if init:
@@ -84,8 +91,7 @@ async def test_db(init: bool = False):
         return {
             "status": "connected",
             "select_1": val,
-            "database_url_scheme": settings.DATABASE_URL.split("://")[0] if "://" in settings.DATABASE_URL else "unknown",
-            "database_host": settings.DATABASE_URL.split("@")[-1].split("/")[0] if "@" in settings.DATABASE_URL else "local",
+            "database_url": masked_db,
             "tables": tables,
         }
     except Exception as exc:
@@ -94,6 +100,7 @@ async def test_db(init: bool = False):
             status_code=500,
             content={
                 "status": "error",
+                "database_url": masked_db,
                 "error_type": type(exc).__name__,
                 "error_msg": str(exc),
                 "traceback": traceback.format_exc(),
