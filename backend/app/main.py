@@ -40,8 +40,66 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
 # Include central API v1 routes
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Ensure CORS headers are always returned even when an internal 500 error occurs."""
+    import traceback
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal Server Error",
+            "error_type": type(exc).__name__,
+            "error_msg": str(exc),
+        },
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
+
+
+@app.get("/api/test-db", tags=["Health"])
+async def test_db(init: bool = False):
+    """Diagnostic endpoint to verify database connectivity and table schema."""
+    from sqlalchemy import text
+    try:
+        async with engine.begin() as conn:
+            if init:
+                await conn.run_sync(Base.metadata.create_all)
+            res = await conn.execute(text("SELECT 1"))
+            val = res.scalar()
+            
+            tables = []
+            if settings.DATABASE_URL.startswith("postgresql"):
+                t_res = await conn.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;"))
+                tables = [r[0] for r in t_res.fetchall()]
+        return {
+            "status": "connected",
+            "select_1": val,
+            "database_url_scheme": settings.DATABASE_URL.split("://")[0] if "://" in settings.DATABASE_URL else "unknown",
+            "database_host": settings.DATABASE_URL.split("@")[-1].split("/")[0] if "@" in settings.DATABASE_URL else "local",
+            "tables": tables,
+        }
+    except Exception as exc:
+        import traceback
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "error_type": type(exc).__name__,
+                "error_msg": str(exc),
+                "traceback": traceback.format_exc(),
+            },
+            headers={"Access-Control-Allow-Origin": "*"}
+        )
 
 
 import socket
